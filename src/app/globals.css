@@ -1,0 +1,152 @@
+/* ─── Google Fonts ─────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+/* ─── CSS Custom Properties (Design Tokens) ────────────────────────── */
+:root {
+  /* Colors */
+  --color-gold-400: #eabc63;
+  --color-gold-500: #D4AF37;
+  --color-gold-600: #c89b2c;
+  --color-pitch-black: #000000;
+  --color-dark-surface: #0a0a0a;
+  --color-dark-card: #1A1A1A;
+  --color-dark-elevated: #262626;
+  --color-dark-border: #333333;
+
+  /* Gradients */
+  --gradient-gold: linear-gradient(135deg, #eabc63 0%, #D4AF37 50%, #c89b2c 100%);
+  --gradient-gold-h: linear-gradient(90deg, #c89b2c 0%, #eabc63 50%, #c89b2c 100%);
+  --gradient-dark: linear-gradient(180deg, #1A1A1A 0%, #000000 100%);
+
+  /* Spacing */
+  --nav-height: 4.5rem;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ─── Reset & Base ──────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", "Roboto", "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--color-pitch-black);
+  color: #ffffff;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile viewport height fix */
+#__next, main {
+  min-height: 100dvh;
+}
+
+/* ─── Gold Divider ──────────────────────────────────────────────────── */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold-500), transparent);
+  border: none;
+  margin: 0;
+}
+
+.gold-divider-v {
+  width: 1px;
+  background: linear-gradient(180deg, transparent, var(--color-gold-500), transparent);
+}
+
+/* ─── Gold Text Gradient ────────────────────────────────────────────── */
+.text-gold-gradient {
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Scrollbar Styling ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-pitch-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-dark-border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-600);
+}
+
+/* ─── Focus ring global ─────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-gold-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Input autofill override (Webkit) ──────────────────────────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #1A1A1A inset;
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ─── Page transition animation ─────────────────────────────────────── */
+.page-enter {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 8px rgba(212,175,55,0.2); }
+  50%       { box-shadow: 0 0 20px rgba(212,175,55,0.4); }
+}
+
+/* ─── Skeleton Loader ───────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #1A1A1A 25%,
+    #262626 50%,
+    #1A1A1A 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* ─── Bottom Nav safe area ──────────────────────────────────────────── */
+.bottom-nav-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
