@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Avatar } from "@/components/ui/Avatar";
 import { LiveMatchesFeed } from "@/components/ui/LiveMatchesFeed";
 import type { Profile } from "@/types/database.types";
+import { BetsProvider } from "@/components/dashboard/BetsContext";
+import { UserBetsSidebar } from "@/components/dashboard/UserBetsSidebar";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -130,24 +132,26 @@ export default async function HomePage() {
 
       {/* ── Conteúdo em Grid ── */}
       <main className="px-4 py-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Coluna Esquerda (Mural) */}
-          <div className="lg:col-span-4">
-            <MuralSocial />
-          </div>
+        <BetsProvider>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* Coluna Esquerda (Mural) - Último no mobile */}
+            <div className="lg:col-span-4 order-3 lg:order-1">
+              <MuralSocial />
+            </div>
 
-          {/* Coluna Central (Jogos — dados reais da API) */}
-          <div className="lg:col-span-4">
-            <LiveMatchesFeed />
-          </div>
+            {/* Coluna Central (Jogos) - Primeiro no mobile */}
+            <div className="lg:col-span-4 order-1 lg:order-2">
+              <LiveMatchesFeed />
+            </div>
 
-          {/* Coluna Direita (Tabela) */}
-          <div className="lg:col-span-4">
-            <TabelaCopa />
-          </div>
+            {/* Coluna Direita (Meus Palpites) - Segundo no mobile */}
+            <div className="lg:col-span-4 order-2 lg:order-3">
+              <UserBetsSidebar />
+            </div>
 
-        </div>
+          </div>
+        </BetsProvider>
       </main>
     </div>
   );
