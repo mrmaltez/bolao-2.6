@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "./globals.css";
+import { ZikaBlockerWrapper } from "@/components/ui/ZikaBlockerWrapper";
 
 export const metadata: Metadata = {
   title: {
@@ -38,6 +40,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="bg-pitch-black text-text-primary antialiased">
+        <Suspense fallback={null}>
+          <ZikaBlockerWrapper />
+        </Suspense>
         {children}
       </body>
     </html>

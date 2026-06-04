@@ -5,7 +5,7 @@ import { Database } from "@/types/database.types";
 
 export async function syncMatchResults() {
   console.log("[Admin Sync] Iniciando sincronização de placares...");
-  
+
   try {
     const token = process.env.FOOTBALL_DATA_TOKEN;
     if (!token) {
@@ -25,14 +25,14 @@ export async function syncMatchResults() {
     }
 
     const data = await response.json();
-    
+
     if (data.matches && data.matches.length > 0) {
       console.log('Status de um jogo de exemplo da API:', data.matches[0].status);
     }
-    
+
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceKey) {
-       throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada no servidor.");
+      throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada no servidor.");
     }
 
     // Precisamos do Service Role para bypassar o RLS e fazer o upsert das partidas reais
@@ -78,15 +78,15 @@ export async function syncMatchResults() {
     const scoringPromises = upsertData
       .filter((m: any) => m.home_score !== null && m.away_score !== null)
       .map((m: any) => scoreMatches(adminClient, m.id.toString(), m.home_score, m.away_score));
-      
+
     await Promise.all(scoringPromises);
     console.log(`[Admin Sync] Motor de pontuação executado para ${scoringPromises.length} partidas.`);
 
     console.log(`[Admin Sync] Sincronização concluída com sucesso! ${finishedMatches.length} partidas atualizadas.`);
-    return { 
-      success: true, 
-      count: finishedMatches.length, 
-      message: `${finishedMatches.length} placar(es) sincronizado(s) com sucesso.` 
+    return {
+      success: true,
+      count: finishedMatches.length,
+      message: `${finishedMatches.length} placar(es) sincronizado(s) com sucesso.`
     };
 
   } catch (error: any) {
@@ -163,17 +163,17 @@ async function scoreMatches(
   // 2. Calcular e atualizar os pontos de cada palpite
   type BetPartial = { id: string; user_id: string; home_score_bet: number; away_score_bet: number };
   const typedBets = bets as BetPartial[];
-  
+
   for (const bet of typedBets) {
     const pontos = await calculatePoints(bet.home_score_bet, bet.away_score_bet, homeScore, awayScore);
-    
+
     console.log(`[Admin Sync] Palpite do user ${bet.user_id}: ${bet.home_score_bet}x${bet.away_score_bet} | Real: ${homeScore}x${awayScore} | Pontos calculados: ${pontos}`);
-    
+
     const { error: updateError } = await adminClient
       .from("bets")
-      .update({ 
-        pontos: pontos, 
-        updated_at: new Date().toISOString() 
+      .update({
+        pontos: pontos,
+        updated_at: new Date().toISOString()
       })
       .eq("id", bet.id);
 
@@ -201,7 +201,7 @@ async function scoreMatches(
 
     if (userBets) {
       type UserBetPartial = { pontos: number | null };
-      const ub = userBets as UserBetPartial[]; 
+      const ub = userBets as UserBetPartial[];
       const totalPoints = ub.reduce((acc, curr) => acc + (curr.pontos || 0), 0);
       console.log(`[Admin Sync] Atualizando profile do usuário ${userId} para totalPoints: ${totalPoints}`);
 
@@ -209,7 +209,7 @@ async function scoreMatches(
         .from("profiles")
         .update({ pontos_total: totalPoints, updated_at: new Date().toISOString() })
         .eq("id", userId);
-        
+
       if (profileUpdateError) {
         console.error(`[Admin Sync] Erro ao atualizar pontos_total (user_id: ${userId}) na tabela profiles:`, profileUpdateError);
       }
