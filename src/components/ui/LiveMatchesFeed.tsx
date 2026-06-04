@@ -46,34 +46,34 @@ function formatMatchTime(utcDate: string): string {
 function formatDayHeader(dateString: string): string {
   const [year, month, day] = dateString.split("-").map(Number);
   const date = new Date(year, month - 1, day);
-  
+
   const formatter = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-  
+
   const formatted = formatter.format(date);
   // Capitaliza a primeira letra: "quinta-feira, 20 de junho" -> "Quinta-feira, 20 de junho"
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  SCHEDULED: { label: "Agendado",    className: "bg-dark-elevated text-text-muted border border-dark-border" },
-  TIMED:     { label: "Agendado",    className: "bg-dark-elevated text-text-muted border border-dark-border" },
-  IN_PLAY:   { label: "AO VIVO",     className: "bg-gold-500 text-pitch-black font-bold animate-pulse shadow-gold-glow" },
-  PAUSED:    { label: "Intervalo",   className: "bg-gold-500/80 text-pitch-black font-bold" },
-  FINISHED:  { label: "Encerrado",   className: "bg-dark-elevated text-text-secondary border border-dark-border" },
-  POSTPONED: { label: "Adiado",      className: "bg-dark-elevated text-gold-500 border border-gold-900/50" },
-  CANCELLED: { label: "Cancelado",   className: "bg-dark-elevated text-red-400 border border-red-900/50" },
+  SCHEDULED: { label: "Agendado", className: "bg-dark-elevated text-text-muted border border-dark-border" },
+  TIMED: { label: "Agendado", className: "bg-dark-elevated text-text-muted border border-dark-border" },
+  IN_PLAY: { label: "AO VIVO", className: "bg-neon-500 text-pitch-black font-bold animate-pulse shadow-neon-glow" },
+  PAUSED: { label: "Intervalo", className: "bg-neon-500/80 text-pitch-black font-bold" },
+  FINISHED: { label: "Encerrado", className: "bg-dark-elevated text-text-secondary border border-dark-border" },
+  POSTPONED: { label: "Adiado", className: "bg-dark-elevated text-neon-500 border border-neon-900/50" },
+  CANCELLED: { label: "Cancelado", className: "bg-dark-elevated text-red-400 border border-red-900/50" },
 };
 
 // ─── Match Card ──────────────────────────────────────────────────────────────
-function MatchCard({ 
-  match, 
-  userBet, 
-  onSaveSuccess 
-}: { 
+function MatchCard({
+  match,
+  userBet,
+  onSaveSuccess
+}: {
   match: FDMatch;
   userBet?: { home: number, away: number };
   onSaveSuccess: (home: number, away: number) => void;
@@ -85,12 +85,14 @@ function MatchCard({
 
   // Lógica de bloqueio: 5 minutos antes do jogo
   const matchTime = new Date(match.utcDate).getTime();
-  const isLocked = Date.now() > matchTime - 5 * 60 * 1000 || !["SCHEDULED", "TIMED"].includes(match.status);
+  // TODO: REMOVER MODO DE TESTE
+  // const isLocked = Date.now() > matchTime - 5 * 60 * 1000 || !["SCHEDULED", "TIMED"].includes(match.status);
+  const isLocked = false;
 
   // Estados locais para os inputs de palpite, inicializados com o palpite existente se houver
   const [betHome, setBetHome] = useState<string>(userBet ? userBet.home.toString() : "");
   const [betAway, setBetAway] = useState<string>(userBet ? userBet.away.toString() : "");
-  
+
   // Se o palpite mudar no contexto (ex: via sync de outra aba/componente), atualiza aqui
   useEffect(() => {
     if (userBet) {
@@ -118,7 +120,7 @@ function MatchCard({
 
     try {
       const { saveBet } = await import("@/app/actions/bet");
-      
+
       const homeVal = Number(betHome);
       const awayVal = Number(betAway);
 
@@ -152,9 +154,8 @@ function MatchCard({
 
   return (
     <article
-      className={`rounded-xl bg-dark-card border shadow-md transition-all duration-300 ${
-        isLive ? "border-gold-500/50 shadow-[0_0_20px_rgba(212,175,55,0.15)]" : "border-dark-border"
-      }`}
+      className={`rounded-xl bg-dark-card border shadow-md transition-all duration-300 ${isLive ? "border-neon-500 shadow-[0_0_20px_rgba(255,107,0,0.25)] animate-pulse-neon" : "border-dark-border"
+        }`}
     >
       <div className="px-5 py-4">
         {/* Header: fase + status + horário */}
@@ -198,15 +199,15 @@ function MatchCard({
 
           {/* Área Central: Inputs de Palpite e Placar Real */}
           <div className="flex flex-col items-center justify-center min-w-[120px] gap-2">
-            
+
             {/* Placar Real (Se o jogo começou/terminou) */}
             {(isLive || isFinished) && hasRealScore && (
               <div className="flex items-center gap-2 mb-1">
-                <span className={`text-2xl font-black ${isLive ? "text-gold-400" : "text-text-primary"}`}>
+                <span className={`text-2xl font-black ${isLive ? "text-neon-400" : "text-text-primary"}`}>
                   {match.score.fullTime.home}
                 </span>
                 <span className="text-xs text-text-muted uppercase tracking-widest font-bold">Placar</span>
-                <span className={`text-2xl font-black ${isLive ? "text-gold-400" : "text-text-primary"}`}>
+                <span className={`text-2xl font-black ${isLive ? "text-neon-400" : "text-text-primary"}`}>
                   {match.score.fullTime.away}
                 </span>
               </div>
@@ -222,14 +223,13 @@ function MatchCard({
                 onChange={(e) => setBetHome(e.target.value)}
                 disabled={isLocked || isSaving}
                 placeholder="-"
-                className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-colors ${
-                  isLocked
+                className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-all duration-200 ${isLocked
                     ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
-                    : "bg-pitch-black border-dark-border text-gold-400 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 shadow-inner"
-                }`}
+                    : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
+                  }`}
                 aria-label={`Palpite gols ${match.homeTeam.shortName}`}
               />
-              
+
               <div className="flex flex-col items-center justify-center">
                 {isLocked ? (
                   <span className="text-text-muted text-sm" title="Palpites bloqueados">🔒</span>
@@ -246,11 +246,10 @@ function MatchCard({
                 onChange={(e) => setBetAway(e.target.value)}
                 disabled={isLocked || isSaving}
                 placeholder="-"
-                className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-colors ${
-                  isLocked
+                className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-all duration-200 ${isLocked
                     ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
-                    : "bg-pitch-black border-dark-border text-gold-400 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 shadow-inner"
-                }`}
+                    : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
+                  }`}
                 aria-label={`Palpite gols ${match.awayTeam.shortName}`}
               />
             </div>
@@ -285,15 +284,14 @@ function MatchCard({
             {saveStatus === "error" && (
               <p className="text-xs text-red-400 mb-2 font-medium text-center">{errorMessage}</p>
             )}
-            
+
             <button
               onClick={handleSave}
               disabled={isSaving || isLocked || betHome === "" || betAway === ""}
-              className={`w-full max-w-[200px] py-2 px-4 rounded-lg text-xs font-bold tracking-widest uppercase transition-all duration-300 ${
-                saveStatus === "success"
-                  ? "bg-green-500/20 text-green-400 border border-green-500/50"
-                  : "bg-gold-500 text-pitch-black hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed"
-              }`}
+              className={`w-full max-w-[200px] py-2 px-4 rounded-lg text-xs font-bold tracking-widest uppercase transition-all duration-300 border ${saveStatus === "success"
+                  ? "bg-green-500/10 text-green-400 border-green-500/50"
+                  : "bg-transparent text-neon-400 border-neon-500/50 hover:bg-neon-500/10 hover:border-neon-500 hover:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-neon-500/50 disabled:hover:drop-shadow-none"
+                }`}
             >
               {isSaving ? "Salvando..." : saveStatus === "success" ? "✔ Salvo" : "Salvar Palpite"}
             </button>
@@ -339,13 +337,13 @@ export function LiveMatchesFeed() {
   // Agrupar matches por dia (YYYY-MM-DD no fuso local)
   const groupedMatches = useMemo(() => {
     const groups: Record<string, FDMatch[]> = {};
-    
+
     matches.forEach((match) => {
       const date = new Date(match.utcDate);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
-      const localDateStr = `${year}-${month}-${day}`; 
+      const localDateStr = `${year}-${month}-${day}`;
 
       if (!groups[localDateStr]) {
         groups[localDateStr] = [];
@@ -364,7 +362,7 @@ export function LiveMatchesFeed() {
     const container = e.currentTarget;
     const scrollLeft = container.scrollLeft;
     const width = container.clientWidth;
-    
+
     const newIndex = Math.round(scrollLeft / width);
     if (newIndex !== currentDayIndex && newIndex >= 0 && newIndex < dayKeys.length) {
       setCurrentDayIndex(newIndex);
@@ -376,7 +374,7 @@ export function LiveMatchesFeed() {
     const newIndex = currentDayIndex + direction;
     if (newIndex >= 0 && newIndex < dayKeys.length) {
       setCurrentDayIndex(newIndex);
-      
+
       if (carouselRef.current) {
         const width = carouselRef.current.clientWidth;
         carouselRef.current.scrollTo({
@@ -405,7 +403,7 @@ export function LiveMatchesFeed() {
   if (error) {
     return (
       <section aria-labelledby="rodada-heading">
-         <h2 id="rodada-heading" className="text-xl font-bold text-text-primary tracking-tight mb-4">
+        <h2 id="rodada-heading" className="text-xl font-bold text-text-primary tracking-tight mb-4">
           Jogos da Copa 2026
         </h2>
         <div className="rounded-xl border border-red-900/50 bg-red-950/30 px-5 py-6 text-center">
@@ -435,13 +433,13 @@ export function LiveMatchesFeed() {
 
   return (
     <section aria-labelledby="rodada-heading" className="flex flex-col w-full max-w-full overflow-hidden">
-      
+
       {/* Navegação Diária */}
       <div className="flex items-center justify-between mb-4 bg-dark-card border border-dark-border rounded-xl p-2 shadow-sm">
         <button
           onClick={() => navigateDay(-1)}
           disabled={currentDayIndex === 0}
-          className="p-2 text-gold-400 disabled:text-dark-border disabled:cursor-not-allowed hover:bg-dark-elevated rounded-lg transition-colors active:scale-95"
+          className="p-2 text-neon-400 disabled:text-dark-border disabled:cursor-not-allowed hover:bg-dark-elevated rounded-lg transition-colors active:scale-95"
           aria-label="Dia anterior"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -456,7 +454,7 @@ export function LiveMatchesFeed() {
         <button
           onClick={() => navigateDay(1)}
           disabled={currentDayIndex === dayKeys.length - 1}
-          className="p-2 text-gold-400 disabled:text-dark-border disabled:cursor-not-allowed hover:bg-dark-elevated rounded-lg transition-colors active:scale-95"
+          className="p-2 text-neon-400 disabled:text-dark-border disabled:cursor-not-allowed hover:bg-dark-elevated rounded-lg transition-colors active:scale-95"
           aria-label="Próximo dia"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -466,7 +464,7 @@ export function LiveMatchesFeed() {
       </div>
 
       {/* Carrossel de Dias (Swipe Horizontal) */}
-      <div 
+      <div
         ref={carouselRef}
         onScroll={handleScroll}
         className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-2"
@@ -476,10 +474,10 @@ export function LiveMatchesFeed() {
           <div key={key} className="w-full flex-shrink-0 snap-center px-1">
             <div className="space-y-4">
               {groupedMatches[key].map((match) => (
-                <MatchCard 
-                  key={match.id} 
-                  match={match} 
-                  userBet={userBets[match.id]} 
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  userBet={userBets[match.id]}
                   onSaveSuccess={(home, away) => updateLocalBet(match.id, home, away)}
                 />
               ))}
@@ -489,7 +487,8 @@ export function LiveMatchesFeed() {
       </div>
 
       {/* Estilo local para esconder scrollbar no Webkit caso global falhe */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
         }

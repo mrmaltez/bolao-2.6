@@ -10,7 +10,7 @@ export function UserBetsSidebar() {
     return (
       <aside className="rounded-xl bg-dark-card border border-dark-border p-5 h-full min-h-[300px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-2">
-          <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-neon-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-text-muted text-xs font-medium animate-pulse">Carregando seus palpites...</p>
         </div>
       </aside>
@@ -27,7 +27,7 @@ export function UserBetsSidebar() {
     <aside className="flex flex-col h-full">
       <div className="sticky top-6 rounded-xl bg-dark-card border border-dark-border overflow-hidden shadow-lg">
         {/* Cabeçalho */}
-        <div className="px-5 py-4 border-b border-dark-border bg-gradient-to-r from-gold-900/10 to-transparent flex items-center gap-3">
+        <div className="px-5 py-4 border-b border-dark-border bg-gradient-to-r from-neon-900/10 to-transparent flex items-center gap-3">
           <span className="text-2xl" aria-hidden="true">🎯</span>
           <div>
             <h2 className="text-sm font-bold text-text-primary tracking-tight">Meus Palpites</h2>
@@ -50,7 +50,7 @@ export function UserBetsSidebar() {
             <ul role="list" className="divide-y divide-dark-border">
               {userMatches.map((match) => {
                 const bet = userBets[match.id];
-                
+
                 return (
                   <li key={match.id} className="p-4 hover:bg-dark-elevated/40 transition-colors">
                     <div className="flex items-center justify-between mb-2">
@@ -62,24 +62,24 @@ export function UserBetsSidebar() {
                       </p>
                       {/* Opcional: mostrar pontos aqui se tivéssemos o retorno do DB para a aposta concluída */}
                     </div>
-                    
+
                     <div className="flex items-center justify-between gap-2">
                       {/* Times */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-text-primary truncate">
                           {match.homeTeam.shortName || match.homeTeam.name}{" "}
-                          <span className="text-gold-500 font-medium mx-1 text-xs">vs</span>{" "}
+                          <span className="text-neon-500 font-medium mx-1 text-xs">vs</span>{" "}
                           {match.awayTeam.shortName || match.awayTeam.name}
                         </p>
                       </div>
 
                       {/* Placar Apostado */}
-                      <div className="flex items-center gap-2 flex-shrink-0 bg-pitch-black px-3 py-1.5 rounded-lg border border-dark-border shadow-inner">
-                        <span className="text-base font-black text-gold-400">
+                      <div className="flex items-center gap-2 flex-shrink-0 bg-pitch-black px-3 py-1.5 rounded-lg border border-dark-elevated shadow-inner">
+                        <span className="text-base font-black text-neon-400 drop-shadow-[0_0_5px_rgba(255,107,0,0.6)]">
                           {bet.home}
                         </span>
-                        <span className="text-text-muted font-bold text-xs">–</span>
-                        <span className="text-base font-black text-gold-400">
+                        <span className="text-text-muted font-bold text-xs drop-shadow-none">–</span>
+                        <span className="text-base font-black text-neon-400 drop-shadow-[0_0_5px_rgba(255,107,0,0.6)]">
                           {bet.away}
                         </span>
                       </div>
@@ -91,7 +91,8 @@ export function UserBetsSidebar() {
           )}
         </div>
       </div>
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
       `}} />
     </aside>

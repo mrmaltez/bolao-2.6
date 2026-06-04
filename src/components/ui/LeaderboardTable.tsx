@@ -40,9 +40,9 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
               className={clsx(
                 "grid grid-cols-[auto_1fr_auto] items-center px-5 py-4 gap-3 transition-colors",
                 isCurrentUser
-                  ? "bg-gold-900/10 border-l-4 border-l-gold-500 pl-4"
+                  ? "bg-neon-900/10 border-l-4 border-l-neon-500 pl-4"
                   : "hover:bg-dark-elevated/50",
-                index === 0 && "bg-gradient-to-r from-gold-900/5 to-transparent"
+                index === 0 && "bg-gradient-to-r from-neon-900/5 to-transparent"
               )}
               aria-label={`${position}º ${entry.username} — ${entry.pontos_total} pontos`}
             >
@@ -65,12 +65,12 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
                 <span
                   className={clsx(
                     "text-sm font-semibold truncate",
-                    isCurrentUser ? "text-gold-400" : "text-text-primary"
+                    isCurrentUser ? "text-neon-400" : "text-text-primary"
                   )}
                 >
                   {entry.username}
                   {isCurrentUser && (
-                    <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] bg-gold-500/20 text-gold-400 font-bold uppercase tracking-wider">(Você)</span>
+                    <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] bg-neon-500/20 text-neon-400 font-bold uppercase tracking-wider">(Você)</span>
                   )}
                 </span>
               </div>
@@ -80,7 +80,7 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
                 <span
                   className={clsx(
                     "font-bold text-xl leading-none",
-                    position === 1 ? "text-gold-400" : "text-text-primary"
+                    position === 1 ? "text-neon-400" : "text-text-primary"
                   )}
                 >
                   {entry.pontos_total}

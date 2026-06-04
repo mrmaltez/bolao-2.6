@@ -62,7 +62,7 @@ export function LoginForm() {
           autoComplete="email"
           placeholder="seuemail@exemplo.com"
           {...register("email")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 transition-all duration-200 text-sm"
+          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
         />
         {errors.email && (
           <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>
@@ -80,7 +80,7 @@ export function LoginForm() {
           autoComplete="current-password"
           placeholder="••••••••"
           {...register("password")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 transition-all duration-200 text-sm"
+          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
         />
         {errors.password && (
           <p className="text-xs text-red-400 mt-1">{errors.password.message}</p>
@@ -99,7 +99,7 @@ export function LoginForm() {
         id="login-submit-btn"
         type="submit"
         disabled={isLoading}
-        className="w-full py-4 rounded-lg font-semibold text-sm tracking-wide text-pitch-black bg-gold-gradient hover:opacity-90 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+        className="w-full py-4 rounded-lg font-semibold text-sm tracking-wide text-pitch-black bg-neon-gradient hover:opacity-90 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">

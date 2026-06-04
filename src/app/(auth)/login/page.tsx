@@ -25,14 +25,14 @@ export default function LoginPage({
       />
 
       {/* Estrela decorativa top */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-gold-600/40 text-xs tracking-[0.4em] uppercase font-light select-none">
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-neon-600/40 text-xs tracking-[0.4em] uppercase font-light select-none">
         ✦ Copa do Mundo 2026 ✦
       </div>
 
       <div className="relative w-full max-w-sm">
         {/* Logo / Título */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-dark-card border border-dark-border mb-6 shadow-gold-glow relative">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-dark-card border border-dark-border mb-6 shadow-neon-glow relative">
             <span
               className="text-4xl"
               role="img"
@@ -42,13 +42,13 @@ export default function LoginPage({
               🏆
             </span>
             {/* Anel pulsante */}
-            <div className="absolute inset-0 rounded-full border border-gold-600/30 animate-pulse-gold" />
+            <div className="absolute inset-0 rounded-full border border-neon-600/30 animate-pulse-neon" />
           </div>
 
           <h1 className="text-4xl font-black text-text-primary tracking-tight leading-tight">
             Bolão
           </h1>
-          <p className="text-xl font-bold text-gold-500 mt-1 uppercase tracking-widest">
+          <p className="text-xl font-bold text-neon-500 mt-1 uppercase tracking-widest">
             Copa 2026
           </p>
           <p className="text-text-muted text-xs tracking-widest uppercase mt-3">
@@ -64,7 +64,7 @@ export default function LoginPage({
           <LoginForm />
 
           <div className="relative my-6">
-            <hr className="gold-divider" />
+            <hr className="neon-divider" />
             <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 px-3 bg-dark-card text-xs text-text-muted">
               ou
             </span>
@@ -75,7 +75,7 @@ export default function LoginPage({
             <Link
               href="/cadastro"
               id="go-to-signup-link"
-              className="text-gold-400 font-medium hover:text-gold-300 transition-colors underline underline-offset-2"
+              className="text-neon-400 font-medium hover:text-neon-300 transition-colors underline underline-offset-2"
             >
               Criar conta grátis
             </Link>

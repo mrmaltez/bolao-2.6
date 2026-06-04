@@ -27,7 +27,7 @@ export function Avatar({
   return (
     <div
       className={clsx(
-        "relative flex-shrink-0 rounded-full border-[1.5px] border-gold-500/50 shadow-sm overflow-hidden",
+        "relative flex-shrink-0 rounded-full border-[1.5px] border-neon-500/50 shadow-sm overflow-hidden",
         className
       )}
       style={{ width: px, height: px }}
@@ -49,7 +49,7 @@ export function Avatar({
             text
           )}
         >
-          <span className="text-gold-400 font-semibold select-none">
+          <span className="text-neon-400 font-semibold select-none">
             {initial}
           </span>
         </div>

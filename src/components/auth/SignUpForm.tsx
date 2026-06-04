@@ -96,7 +96,7 @@ export function SignUpForm() {
           autoComplete="username"
           placeholder="Ex: RafahGol, Cris10, ZéDoBolão"
           {...register("username")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 transition-all duration-200 text-sm"
+          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
         />
         {errors.username && (
           <p className="text-xs text-red-400">{errors.username.message}</p>
@@ -114,7 +114,7 @@ export function SignUpForm() {
           autoComplete="email"
           placeholder="seuemail@exemplo.com"
           {...register("email")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 transition-all duration-200 text-sm"
+          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
         />
         {errors.email && (
           <p className="text-xs text-red-400">{errors.email.message}</p>
@@ -133,7 +133,7 @@ export function SignUpForm() {
             autoComplete="new-password"
             placeholder="••••••••"
             {...register("password")}
-            className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 transition-all duration-200 text-sm"
+            className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
           />
           {errors.password && (
             <p className="text-xs text-red-400">{errors.password.message}</p>
@@ -149,7 +149,7 @@ export function SignUpForm() {
             autoComplete="new-password"
             placeholder="••••••••"
             {...register("confirmPassword")}
-            className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 transition-all duration-200 text-sm"
+            className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
           />
           {errors.confirmPassword && (
             <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>
@@ -159,8 +159,8 @@ export function SignUpForm() {
 
       {/* Divisor temático */}
       <div className="relative py-4 my-2">
-        <hr className="gold-divider" />
-        <span className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 px-3 bg-dark-card text-[11px] text-gold-500 font-bold uppercase tracking-widest">
+        <hr className="neon-divider" />
+        <span className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 px-3 bg-dark-card text-[11px] text-neon-500 font-bold uppercase tracking-widest">
           ⚽ Seus Palpites Especiais
         </span>
       </div>
@@ -176,7 +176,7 @@ export function SignUpForm() {
           list="selecoes-list"
           placeholder="Qual seleção vai ser Campeã?"
           {...register("palpite_campeao")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 transition-all duration-200 text-sm"
+          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
         />
         <datalist id="selecoes-list">
           {SELECOES.map((s) => (
@@ -198,7 +198,7 @@ export function SignUpForm() {
           type="text"
           placeholder="Ex: Brasil vs Argentina"
           {...register("palpite_final")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 transition-all duration-200 text-sm"
+          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
         />
         {errors.palpite_final && (
           <p className="text-xs text-red-400">{errors.palpite_final.message}</p>
@@ -220,7 +220,7 @@ export function SignUpForm() {
         id="signup-submit-btn"
         type="submit"
         disabled={isLoading}
-        className="w-full py-4 rounded-lg font-semibold text-sm tracking-wide text-pitch-black bg-gold-gradient hover:opacity-90 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-4 rounded-lg font-semibold text-sm tracking-wide text-pitch-black bg-neon-gradient hover:opacity-90 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">

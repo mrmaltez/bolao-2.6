@@ -26,7 +26,7 @@ export default function CadastroPage() {
           <Link
             href="/login"
             id="back-to-login-link"
-            className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-gold-400 transition-colors mb-6"
+            className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-neon-400 transition-colors mb-6"
           >
             ← Voltar para o Login
           </Link>
@@ -34,7 +34,7 @@ export default function CadastroPage() {
           <h1 className="text-3xl font-black text-text-primary tracking-tight leading-tight">
             Entrar no Bolão
           </h1>
-          <p className="text-lg font-bold text-gold-500 mt-1 uppercase tracking-widest">
+          <p className="text-lg font-bold text-neon-500 mt-1 uppercase tracking-widest">
             Copa do Mundo 2026
           </p>
           <p className="text-text-muted text-xs tracking-wide mt-2">
@@ -43,8 +43,8 @@ export default function CadastroPage() {
         </div>
 
         {/* Aviso Palpite Especial */}
-        <div className="mb-6 px-4 py-3.5 rounded-xl bg-gold-900/20 border border-gold-700/30 text-sm">
-          <p className="text-gold-400 font-medium mb-1">⚽ Palpite Especial</p>
+        <div className="mb-6 px-4 py-3.5 rounded-xl bg-neon-900/20 border border-neon-700/30 text-sm">
+          <p className="text-neon-400 font-medium mb-1">⚽ Palpite Especial</p>
           <p className="text-text-secondary text-xs leading-relaxed">
             Acertar o Campeão e a Final valem pontos bônus no Ranking!
             Esses campos só podem ser preenchidos agora no cadastro.
@@ -56,7 +56,7 @@ export default function CadastroPage() {
           <SignUpForm />
 
           <div className="relative my-6">
-            <hr className="gold-divider" />
+            <hr className="neon-divider" />
           </div>
 
           <p className="text-center text-sm text-text-secondary">
@@ -64,7 +64,7 @@ export default function CadastroPage() {
             <Link
               href="/login"
               id="go-to-login-link"
-              className="text-gold-400 font-medium hover:text-gold-300 transition-colors underline underline-offset-2"
+              className="text-neon-400 font-medium hover:text-neon-300 transition-colors underline underline-offset-2"
             >
               Fazer login
             </Link>

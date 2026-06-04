@@ -14,14 +14,22 @@ async function RankingContent() {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: ranking } = await supabase
-    .from("ranking_view")
-    .select("*")
-    .returns<RankingEntry[]>();
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url, pontos_total")
+    .order("pontos_total", { ascending: false });
+
+  const ranking: RankingEntry[] = (profiles ?? []).map((profile, index) => ({
+    user_id: profile.id,
+    username: profile.username,
+    avatar_url: profile.avatar_url,
+    pontos_total: profile.pontos_total,
+    position: index + 1,
+  }));
 
   return (
     <LeaderboardTable
-      entries={ranking ?? []}
+      entries={ranking}
       currentUserId={user?.id}
     />
   );
@@ -60,11 +68,11 @@ export default function RankingPage() {
             <div className="flex flex-col items-center gap-2">
               <span className="text-4xl drop-shadow-md">🥇</span>
               <div
-                className="h-24 w-24 rounded-t-xl flex items-center justify-center shadow-gold-glow relative overflow-hidden"
+                className="h-24 w-24 rounded-t-xl flex items-center justify-center shadow-neon-glow relative overflow-hidden"
                 style={{ background: "linear-gradient(180deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.05) 100%)", border: "1px solid rgba(212,175,55,0.4)" }}
               >
                 <div className="absolute inset-0 bg-shimmer animate-shimmer opacity-30" />
-                <span className="text-lg font-black text-gold-400">1º</span>
+                <span className="text-lg font-black text-neon-400">1º</span>
               </div>
             </div>
             {/* 3º */}

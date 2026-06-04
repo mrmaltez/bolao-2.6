@@ -79,9 +79,10 @@ export async function saveBet(params: SaveBetParams) {
       console.error("[saveBet] Supabase Bet Error Detalhado:", betError);
       
       // Identificar erro de Trigger (Horário do Jogo)
-      if (betError.message.includes("Prazo de palpite encerrado")) {
-        return { error: "Prazo encerrado! O jogo já começou ou faltam menos de 5 minutos." };
-      }
+      // TODO: REMOVER MODO DE TESTE
+      // if (betError.message.includes("Prazo de palpite encerrado")) {
+      //   return { error: "Prazo encerrado! O jogo já começou ou faltam menos de 5 minutos." };
+      // }
       
       return { error: "Não foi possível salvar seu palpite." };
     }

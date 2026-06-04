@@ -105,18 +105,18 @@ export default async function PalpitesPage() {
               aria-labelledby={`match-heading-${match.id}`}
             >
               {/* Cabeçalho da partida */}
-              <div className="px-5 py-4 border-b border-dark-border bg-gradient-to-r from-gold-900/10 to-transparent">
+              <div className="px-5 py-4 border-b border-dark-border bg-gradient-to-r from-neon-900/10 to-transparent">
                 <div className="flex items-center justify-between mb-1">
                   <h2
                     id={`match-heading-${match.id}`}
                     className="text-base font-bold text-text-primary"
                   >
                     {match.home_team}{" "}
-                    <span className="text-gold-500 font-medium mx-1">vs</span>{" "}
+                    <span className="text-neon-500 font-medium mx-1">vs</span>{" "}
                     {match.away_team}
                   </h2>
                   {match.home_score !== null && match.away_score !== null ? (
-                    <span className="text-xl font-black text-gold-400 tracking-tight">
+                    <span className="text-xl font-black text-neon-400 tracking-tight">
                       {match.home_score} – {match.away_score}
                     </span>
                   ) : (
@@ -152,7 +152,7 @@ export default async function PalpitesPage() {
                         key={bet.id}
                         className={`
                           flex items-center justify-between px-4 py-3 gap-3
-                          ${isCurrentUser ? "bg-gold-900/10" : "hover:bg-dark-elevated/40"}
+                          ${isCurrentUser ? "bg-neon-900/10" : "hover:bg-dark-elevated/40"}
                           transition-colors
                         `}
                       >
@@ -160,7 +160,7 @@ export default async function PalpitesPage() {
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           {/* Mini avatar inicial */}
                           <div
-                            className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-gold-400 border border-dark-border"
+                            className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-neon-400 border border-dark-border"
                             style={{ background: "linear-gradient(145deg, #1e1e1e, #141414)" }}
                             aria-hidden="true"
                           >
@@ -168,12 +168,12 @@ export default async function PalpitesPage() {
                           </div>
                           <span
                             className={`text-sm truncate ${
-                              isCurrentUser ? "text-gold-400 font-medium" : "text-text-secondary"
+                              isCurrentUser ? "text-neon-400 font-medium" : "text-text-secondary"
                             }`}
                           >
                             {username}
                             {isCurrentUser && (
-                              <span className="ml-1 text-[10px] text-gold-600 font-normal">(você)</span>
+                              <span className="ml-1 text-[10px] text-neon-600 font-normal">(você)</span>
                             )}
                           </span>
                         </div>
@@ -191,7 +191,7 @@ export default async function PalpitesPage() {
                           {/* Pontuação (se já calculada) */}
                           {bet.pontos !== null && (
                             <span
-                              className="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gold-900/30 text-gold-400 border border-gold-800/40"
+                              className="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-neon-900/30 text-neon-400 border border-neon-800/40"
                             >
                               +{bet.pontos}pts
                             </span>

@@ -111,21 +111,21 @@ export function BottomNav() {
               className={clsx(
                 "flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all duration-200 min-w-[56px]",
                 isActive
-                  ? "text-gold-400"
+                  ? "text-neon-400"
                   : "text-text-muted hover:text-text-secondary active:scale-95"
               )}
               aria-current={isActive ? "page" : undefined}
             >
-              <span className="relative">
+              <span className={clsx("relative", isActive && "drop-shadow-[0_0_8px_rgba(255,107,0,0.8)]")}>
                 {icon(isActive)}
                 {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold-400" />
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-neon-400" />
                 )}
               </span>
               <span
                 className={clsx(
-                  "text-[10px] font-medium tracking-wide transition-colors",
-                  isActive ? "text-gold-400" : "text-text-muted"
+                  "text-[10px] tracking-wide transition-colors",
+                  isActive ? "text-neon-400 font-bold" : "text-text-muted font-medium"
                 )}
               >
                 {label}

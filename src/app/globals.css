@@ -7,19 +7,19 @@
 /* ─── CSS Custom Properties (Design Tokens) ────────────────────────── */
 :root {
   /* Colors */
-  --color-gold-400: #eabc63;
-  --color-gold-500: #D4AF37;
-  --color-gold-600: #c89b2c;
-  --color-pitch-black: #000000;
-  --color-dark-surface: #0a0a0a;
-  --color-dark-card: #1A1A1A;
-  --color-dark-elevated: #262626;
-  --color-dark-border: #333333;
+  --color-neon-400: #ff8533;
+  --color-neon-500: #FF6B00;
+  --color-neon-600: #cc5600;
+  --color-pitch-black: #050505;
+  --color-dark-surface: #050505;
+  --color-dark-card: #0F0F11;
+  --color-dark-elevated: #161618;
+  --color-dark-border: #222224;
 
   /* Gradients */
-  --gradient-gold: linear-gradient(135deg, #eabc63 0%, #D4AF37 50%, #c89b2c 100%);
-  --gradient-gold-h: linear-gradient(90deg, #c89b2c 0%, #eabc63 50%, #c89b2c 100%);
-  --gradient-dark: linear-gradient(180deg, #1A1A1A 0%, #000000 100%);
+  --gradient-neon: linear-gradient(135deg, #ff8533 0%, #FF6B00 50%, #cc5600 100%);
+  --gradient-neon-h: linear-gradient(90deg, #cc5600 0%, #ff8533 50%, #cc5600 100%);
+  --gradient-dark: linear-gradient(180deg, #0F0F11 0%, #000000 100%);
 
   /* Spacing */
   --nav-height: 4.5rem;
@@ -27,7 +27,9 @@
 }
 
 /* ─── Reset & Base ──────────────────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -50,26 +52,27 @@ body {
 }
 
 /* Mobile viewport height fix */
-#__next, main {
+#__next,
+main {
   min-height: 100dvh;
 }
 
-/* ─── Gold Divider ──────────────────────────────────────────────────── */
-.gold-divider {
+/* ─── Neon Divider ──────────────────────────────────────────────────── */
+.neon-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-gold-500), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-neon-500), transparent);
   border: none;
   margin: 0;
 }
 
-.gold-divider-v {
+.neon-divider-v {
   width: 1px;
-  background: linear-gradient(180deg, transparent, var(--color-gold-500), transparent);
+  background: linear-gradient(180deg, transparent, var(--color-neon-500), transparent);
 }
 
-/* ─── Gold Text Gradient ────────────────────────────────────────────── */
-.text-gold-gradient {
-  background: var(--gradient-gold);
+/* ─── Neon Text Gradient ────────────────────────────────────────────── */
+.text-neon-gradient {
+  background: var(--gradient-neon);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -80,20 +83,23 @@ body {
   width: 4px;
   height: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--color-pitch-black);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--color-dark-border);
   border-radius: 2px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gold-600);
+  background: var(--color-neon-600);
 }
 
 /* ─── Focus ring global ─────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--color-gold-400);
+  outline: 2px solid var(--color-neon-400);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -102,7 +108,7 @@ body {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px #1A1A1A inset;
+  -webkit-box-shadow: 0 0 0px 1000px #0F0F11 inset;
   -webkit-text-fill-color: #ffffff;
   caret-color: #ffffff;
   transition: background-color 5000s ease-in-out 0s;
@@ -114,33 +120,57 @@ input:-webkit-autofill:focus {
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
-@keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 8px rgba(212,175,55,0.2); }
-  50%       { box-shadow: 0 0 20px rgba(212,175,55,0.4); }
+@keyframes pulse-neon {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(255, 107, 0, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(255, 107, 0, 0.4);
+  }
 }
 
 /* ─── Skeleton Loader ───────────────────────────────────────────────── */
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    #1A1A1A 25%,
-    #262626 50%,
-    #1A1A1A 75%
-  );
+  background: linear-gradient(90deg,
+      #0F0F11 25%,
+      #161618 50%,
+      #0F0F11 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 4px;

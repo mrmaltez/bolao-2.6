@@ -18,7 +18,7 @@ const ARTILHEIROS_MOCK = [
 ];
 
 const GOAL_COLORS = [
-  "from-gold-600/80 to-gold-900/20",
+  "from-neon-600/80 to-neon-900/20",
   "from-slate-400/60 to-slate-800/20",
   "from-amber-700/60 to-amber-900/20",
 ];
@@ -107,7 +107,7 @@ export default function ArtilhariaPage() {
                 <div className="relative z-10 text-right flex-shrink-0">
                   <span
                     className={`text-2xl font-black tracking-tight leading-none ${
-                      index === 0 ? "text-gold-400" : "text-text-primary"
+                      index === 0 ? "text-neon-400" : "text-text-primary"
                     }`}
                   >
                     {player.goals}
@@ -123,7 +123,7 @@ export default function ArtilhariaPage() {
         <div className="mt-6 px-4 py-3.5 rounded-xl bg-dark-card border border-dark-border/50 border-dashed text-center">
           <p className="text-xs text-text-muted">
             🔌 Será integrado com dados reais via{" "}
-            <span className="text-gold-600">API-Football.com</span> assim que a Copa começar.
+            <span className="text-neon-600">API-Football.com</span> assim que a Copa começar.
           </p>
         </div>
       </main>

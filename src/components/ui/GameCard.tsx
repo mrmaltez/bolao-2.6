@@ -11,9 +11,9 @@ interface GameCardProps {
 
 const STATUS_CONFIG = {
   scheduled: { label: "Em Breve",   badge: "bg-dark-elevated text-text-muted border-dark-border" },
-  live:      { label: "AO VIVO",    badge: "bg-gold-500 text-pitch-black font-bold animate-pulse shadow-gold-glow" },
+  live:      { label: "AO VIVO",    badge: "bg-neon-500 text-pitch-black font-bold animate-pulse shadow-neon-glow" },
   finished:  { label: "Encerrado",  badge: "bg-dark-elevated text-text-secondary border-dark-border" },
-  postponed: { label: "Adiado",     badge: "bg-dark-elevated text-gold-500 border-gold-900/50" },
+  postponed: { label: "Adiado",     badge: "bg-dark-elevated text-neon-500 border-neon-900/50" },
 };
 
 function formatMatchTime(isoString: string): string {
@@ -58,7 +58,7 @@ export function GameCard({ match, userBet }: GameCardProps) {
     <article
       className={clsx(
         "relative rounded-xl bg-dark-card border shadow-md transition-all duration-300",
-        isLive ? "border-gold-500/50 shadow-gold-glow/20" : "border-dark-border hover:border-gold-900/40"
+        isLive ? "border-neon-500 shadow-neon-glow" : "border-dark-border hover:border-neon-900/40"
       )}
       aria-label={`${match.home_team} vs ${match.away_team}`}
     >
@@ -88,11 +88,11 @@ export function GameCard({ match, userBet }: GameCardProps) {
           <div className="flex flex-col items-center justify-center min-w-[100px]">
             {hasScore && (isFinished || isLive) ? (
               <div className="flex items-center gap-3">
-                <span className={clsx("text-4xl font-bold tracking-tighter", isLive ? "text-gold-400" : "text-text-primary")}>
+                <span className={clsx("text-5xl font-black tracking-tighter drop-shadow-sm", isLive ? "text-neon-400" : "text-text-primary")}>
                   {match.home_score}
                 </span>
-                <span className="text-xl font-medium text-text-muted">–</span>
-                <span className={clsx("text-4xl font-bold tracking-tighter", isLive ? "text-gold-400" : "text-text-primary")}>
+                <span className="text-xl font-medium text-text-muted px-2">–</span>
+                <span className={clsx("text-5xl font-black tracking-tighter drop-shadow-sm", isLive ? "text-neon-400" : "text-text-primary")}>
                   {match.away_score}
                 </span>
               </div>
@@ -129,11 +129,11 @@ export function GameCard({ match, userBet }: GameCardProps) {
               </span>
               {userBet ? (
                 <div className="flex items-center gap-2.5 bg-pitch-black px-3 py-1 rounded-md border border-dark-elevated">
-                  <span className="text-base font-bold text-gold-400">
+                  <span className="text-base font-bold text-neon-400">
                     {userBet.home_score_bet}
                   </span>
                   <span className="text-xs text-text-muted">–</span>
-                  <span className="text-base font-bold text-gold-400">
+                  <span className="text-base font-bold text-neon-400">
                     {userBet.away_score_bet}
                   </span>
                   {!isDeadlinePassed && (
@@ -143,7 +143,7 @@ export function GameCard({ match, userBet }: GameCardProps) {
               ) : isDeadlinePassed ? (
                 <span className="text-[11px] font-medium text-text-muted bg-dark-elevated px-2 py-0.5 rounded">Prazo encerrado</span>
               ) : (
-                <span className="text-[11px] font-medium text-gold-500 bg-gold-900/10 px-2 py-0.5 rounded border border-gold-900/30">Palpite pendente →</span>
+                <span className="text-[11px] font-bold text-neon-400 bg-neon-900/20 px-3 py-1 rounded-full border border-neon-500/30 hover:bg-neon-900/40 transition-colors cursor-pointer">Palpite pendente →</span>
               )}
             </div>
           </>
