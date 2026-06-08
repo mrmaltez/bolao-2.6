@@ -44,25 +44,25 @@ export function ZikaModal({ profiles, currentUserId, onClose }: ZikaModalProps) 
         </div>
 
         {/* Conteúdo */}
-        <div className="p-5 overflow-y-auto">
-          <p className="text-sm text-text-secondary mb-4">
+        <div className="p-6 overflow-y-auto flex flex-col gap-4">
+          <p className="text-sm text-text-secondary">
             Escolha o seu alvo de hoje. Quem acumular mais votos vai sofrer o Vampetaço no próximo login! <strong className="text-text-muted">(1 voto por dia)</strong>
           </p>
 
           {feedback && (
-            <div className={`p-3 mb-4 rounded-lg text-sm font-semibold border ${feedback.type === "success" ? "bg-green-900/20 text-green-400 border-green-500/30" : "bg-red-900/20 text-red-400 border-red-500/30"}`}>
+            <div className={`p-3 rounded-lg text-sm font-semibold border ${feedback.type === "success" ? "bg-green-900/20 text-green-400 border-green-500/30" : "bg-red-900/20 text-red-400 border-red-500/30"}`}>
               {feedback.message}
             </div>
           )}
 
-          <ul className="space-y-2">
+          <ul className="flex flex-col gap-3">
             {profiles.map(p => {
               if (p.id === currentUserId) return null;
 
               const isVoting = loadingId === p.id;
               
               return (
-                <li key={p.id} className="flex items-center justify-between bg-pitch-black/40 border border-dark-border p-3 rounded-xl hover:bg-dark-elevated transition-colors">
+                <li key={p.id} className="flex items-center justify-between bg-pitch-black/40 border border-dark-border py-3 px-4 rounded-xl hover:bg-dark-elevated transition-colors">
                   <div className="flex items-center gap-3">
                     <Avatar src={p.avatar_url} name={p.username} size="sm" />
                     <span className="font-semibold text-text-primary">{p.username}</span>

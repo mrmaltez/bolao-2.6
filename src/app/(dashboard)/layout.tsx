@@ -19,10 +19,10 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-dvh bg-pitch-black flex flex-col">
+    <div className="w-full min-h-screen flex flex-col items-center justify-start bg-pitch-black">
       {/* Conteúdo principal com padding para o nav */}
       <div
-        className="flex-1 overflow-y-auto"
+        className="flex-1 w-full overflow-y-auto p-4 md:p-0"
         style={{ paddingBottom: "calc(var(--nav-height) + env(safe-area-inset-bottom, 0px))" }}
       >
         {children}

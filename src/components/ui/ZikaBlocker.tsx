@@ -24,6 +24,18 @@ export function ZikaBlocker({ isPunished, userId }: ZikaBlockerProps) {
     // Ativar bloqueio e marcar no localStorage
     setIsBlocked(true);
     localStorage.setItem(servedKey, todayStr);
+
+    // Deslogar o usuário silenciosamente enquanto ele cumpre o castigo
+    const logoutSilently = async () => {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.error("Erro ao deslogar silenciosamente:", e);
+      }
+    };
+    logoutSilently();
   }, [isPunished, userId]);
 
   // Temporizador de 60 segundos
@@ -32,6 +44,7 @@ export function ZikaBlocker({ isPunished, userId }: ZikaBlockerProps) {
 
     if (countdown <= 0) {
       setIsBlocked(false);
+      window.location.href = "/login";
       return;
     }
 

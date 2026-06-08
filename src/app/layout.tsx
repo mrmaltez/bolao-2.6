@@ -39,7 +39,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="bg-pitch-black text-text-primary antialiased">
+      <body className="bg-pitch-black text-text-primary antialiased w-full min-h-screen flex flex-col items-center justify-start overflow-x-hidden">
         <Suspense fallback={null}>
           <ZikaBlockerWrapper />
         </Suspense>

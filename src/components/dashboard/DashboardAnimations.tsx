@@ -6,7 +6,7 @@ import gsap from "gsap";
 /**
  * Envolve os cards do dashboard e anima com fade-in + stagger na montagem.
  */
-export function AnimatedCards({ children }: { children: React.ReactNode }) {
+export function AnimatedCards({ children, className }: { children: React.ReactNode; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export function AnimatedCards({ children }: { children: React.ReactNode }) {
     return () => ctx.revert(); // cleanup
   }, []);
 
-  return <div ref={containerRef}>{children}</div>;
+  return <div ref={containerRef} className={className}>{children}</div>;
 }
 
 /**

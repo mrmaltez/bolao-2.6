@@ -64,7 +64,7 @@ async function MuralSocial() {
 
   if (!profiles || profiles.length === 0) {
     return (
-      <section aria-labelledby="mural-heading" className="rounded-2xl bg-dark-card border border-dark-border shadow-md p-6 h-full flex flex-col">
+      <section aria-labelledby="mural-heading" className="rounded-2xl bg-dark-card border border-dark-border shadow-md p-6 h-full flex flex-col w-full box-border">
         <div className="flex items-center justify-between mb-5">
           <h2 id="mural-heading" className="text-lg font-bold text-text-primary tracking-tight">
             💬 Mural Social
@@ -77,20 +77,184 @@ async function MuralSocial() {
     );
   }
 
-  const lider = profiles[0];
-  const lanterna = profiles[profiles.length - 1];
+  // ── 1. Ordenar por Pontos (único critério) ──
+  const sortedProfiles = [...profiles].sort((a, b) => b.pontos_total - a.pontos_total);
 
-  // Como não temos histórico de rodadas no banco atual, 
-  // simulamos quem "subiu" e "desceu" pegando o 2º e o penúltimo para dar dinamismo.
-  const subiu = profiles.length > 2 ? profiles[1] : null;
-  const desceu = profiles.length > 3 ? profiles[profiles.length - 2] : null;
+  // ── 2. Atribuir posições com empates (mesma pontuação = mesma posição) ──
+  const isTied = (a: typeof profiles[0], b: typeof profiles[0]) => a.pontos_total === b.pontos_total;
 
+  const positions: number[] = [];
+  for (let i = 0; i < sortedProfiles.length; i++) {
+    positions.push(i === 0 ? 0 : isTied(sortedProfiles[i], sortedProfiles[i - 1]) ? positions[i - 1] : i);
+  }
+
+  // ── 3. Calcular ranking anterior (sem os pontos do último dia finalizado) ──
+  const { data: lastFinishedMatch } = await supabase
+    .from("matches")
+    .select("match_start_time")
+    .eq("status", "FINISHED")
+    .order("match_start_time", { ascending: false })
+    .limit(1)
+    .single();
+
+  const posAnteriorMap: Record<string, number> = {};
+
+  if (lastFinishedMatch?.match_start_time) {
+    const lastDate = new Date(lastFinishedMatch.match_start_time);
+    const dayStart = new Date(lastDate); dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(lastDate); dayEnd.setHours(23, 59, 59, 999);
+
+    const { data: lastDayMatches } = await supabase
+      .from("matches")
+      .select("id")
+      .eq("status", "FINISHED")
+      .gte("match_start_time", dayStart.toISOString())
+      .lte("match_start_time", dayEnd.toISOString());
+
+    const lastDayMatchIds = (lastDayMatches ?? []).map((m: { id: string }) => m.id);
+
+    if (lastDayMatchIds.length > 0) {
+      const { data: lastDayBets } = await supabase
+        .from("bets")
+        .select("user_id, pontos")
+        .in("match_id", lastDayMatchIds)
+        .not("pontos", "is", null);
+
+      // Calcular pontos do último dia por user
+      const ultimoDiaPts: Record<string, number> = {};
+      (lastDayBets ?? []).forEach((bet: { user_id: string; pontos: number | null }) => {
+        ultimoDiaPts[bet.user_id] = (ultimoDiaPts[bet.user_id] || 0) + (bet.pontos || 0);
+      });
+
+      // Ranking anterior
+      const anterior = sortedProfiles.map(p => ({
+        ...p,
+        pontos_total: p.pontos_total - (ultimoDiaPts[p.id] ?? 0),
+      }));
+      anterior.sort((a, b) => b.pontos_total - a.pontos_total);
+
+      // Posições anteriores com empate
+      const posAnt: number[] = [];
+      for (let i = 0; i < anterior.length; i++) {
+        posAnt.push(i === 0 ? 0 : isTied(anterior[i], anterior[i - 1]) ? posAnt[i - 1] : i);
+      }
+      anterior.forEach((p, idx) => { posAnteriorMap[p.id] = posAnt[idx]; });
+    }
+  }
+
+  // ── 4. Agrupar em gruposDeClassificacao via reduce (somente por pontos) ──
+  type GrupoClassificacao = {
+    pontos: number;
+    usuarios: typeof profiles[0][];
+  };
+
+  const gruposDeClassificacao: GrupoClassificacao[] = sortedProfiles.reduce<GrupoClassificacao[]>((acc, user) => {
+    const grupoExistente = acc.find(g => g.pontos === user.pontos_total);
+    if (grupoExistente) {
+      grupoExistente.usuarios.push(user);
+    } else {
+      acc.push({
+        pontos: user.pontos_total,
+        usuarios: [user],
+      });
+    }
+    return acc;
+  }, []);
+
+  // Garantir a ordenação do array de grupos
+  gruposDeClassificacao.sort((a, b) => b.pontos - a.pontos);
+
+  // ── 5. Função para determinar emoji, label e detalhe de cada grupo pelo INDEX ──
+  function getGrupoStatus(grupo: GrupoClassificacao, index: number, total: number) {
+    const nomes = grupo.usuarios.map(u => u.username).join(", ");
+    const isMulti = grupo.usuarios.length > 1;
+
+    // PRIMEIRO GRUPO (index 0)
+    if (index === 0) {
+      return {
+        emoji: isMulti ? "⚔️" : "👑",
+        label: isMulti ? "Dividindo o topo!" : "Líder Absoluto",
+        nomes,
+        detalhe: `${grupo.pontos} pts`,
+        detalheCor: "text-neon-400",
+        bg: "bg-dark-elevated",
+        border: "border-dark-border",
+      };
+    }
+
+    // ÚLTIMO GRUPO (somente se total > 1, senão é o mesmo que o primeiro)
+    if (index === total - 1 && total > 1) {
+      return {
+        emoji: isMulti ? "🫂" : "🐢",
+        label: isMulti ? "Abraçados na lanterna..." : "Lanterna",
+        nomes,
+        detalhe: `${grupo.pontos} pts`,
+        detalheCor: "text-text-muted",
+        bg: "bg-dark-elevated",
+        border: "border-dark-border",
+      };
+    }
+
+    // GRUPOS INTERMEDIÁRIOS
+    if (isMulti) {
+      return {
+        emoji: "🤝",
+        label: "Empate Técnico",
+        nomes,
+        detalhe: `${grupo.pontos} pts`,
+        detalheCor: "text-yellow-400",
+        bg: "bg-dark-elevated",
+        border: "border-dark-border",
+      };
+    }
+
+    // Grupo isolado no meio → verificar sobe/desce
+    const user = grupo.usuarios[0];
+    const posAtual = index;
+    const posAnterior = posAnteriorMap[user.id] ?? posAtual;
+    const variacao = posAnterior - posAtual;
+
+    if (variacao > 0) {
+      return {
+        emoji: "🚀",
+        label: "Subiu no Ranking",
+        nomes: user.username,
+        detalhe: `+${variacao} pos.`,
+        detalheCor: "text-green-400",
+        bg: "bg-dark-elevated",
+        border: "border-dark-border",
+      };
+    }
+    if (variacao < 0) {
+      return {
+        emoji: "📉",
+        label: "Desceu no Ranking",
+        nomes: user.username,
+        detalhe: `${Math.abs(variacao)} pos.`,
+        detalheCor: "text-red-400",
+        bg: "bg-dark-elevated",
+        border: "border-dark-border",
+      };
+    }
+
+    return {
+      emoji: "➖",
+      label: "Manteve a Posição",
+      nomes: user.username,
+      detalhe: `${grupo.pontos} pts`,
+      detalheCor: "text-text-muted",
+      bg: "bg-dark-elevated",
+      border: "border-dark-border",
+    };
+  }
+
+  // ── 6. Renderização: .map() sobre gruposDeClassificacao ──
   return (
     <section
       aria-labelledby="mural-heading"
-      className="rounded-2xl bg-dark-card border border-dark-border shadow-md p-6 h-full flex flex-col"
+      className="rounded-2xl bg-dark-card border border-dark-border shadow-md p-6 h-full flex flex-col gap-5 w-full"
     >
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between">
         <h2 id="mural-heading" className="text-lg font-bold text-text-primary tracking-tight">
           💬 Mural Social
         </h2>
@@ -106,64 +270,30 @@ async function MuralSocial() {
         )}
       </div>
 
-      <p className="text-xs text-text-muted mb-5 font-medium">
+      <p className="text-sm text-text-muted font-medium">
         Baseado na última partida: <strong className="text-text-secondary">{dataAtualizacao}</strong>
       </p>
 
-      <div className="flex-1 flex flex-col gap-3 justify-center">
-        {/* Líder Absoluto */}
-        <div className="bg-dark-elevated p-3 rounded-xl border border-dark-border flex items-center gap-3">
-          <div className="text-2xl drop-shadow-md">👑</div>
-          <div>
-            <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Líder Absoluto</p>
-            <p className="text-sm font-semibold text-text-primary truncate">
-              {lider.username} <span className="text-neon-400 text-xs font-bold ml-1">({lider.pontos_total} pts)</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Subiu no Ranking */}
-        {subiu && (
-          <div className="bg-dark-elevated p-3 rounded-xl border border-dark-border flex items-center gap-3">
-            <div className="text-2xl drop-shadow-md">🚀</div>
-            <div>
-              <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Subiu no Ranking</p>
-              <p className="text-sm font-semibold text-text-primary truncate">
-                {subiu.username} <span className="text-green-400 text-xs font-bold ml-1">tá voando!</span>
-              </p>
+      <div className="flex-1 flex flex-col gap-4 justify-center">
+        {/* .map() sobre os GRUPOS, não sobre usuários */}
+        {gruposDeClassificacao.map((grupo, index) => {
+          const status = getGrupoStatus(grupo, index, gruposDeClassificacao.length);
+          return (
+            <div key={index} className={`${status.bg} py-3.5 px-4 rounded-xl border ${status.border} flex items-center gap-3`}>
+              <div className="text-2xl drop-shadow-md">{status.emoji}</div>
+              <div>
+                <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider">{status.label}</p>
+                <p className="text-sm font-semibold text-text-primary truncate">
+                  {status.nomes} <span className={`text-xs font-bold ml-1 ${status.detalheCor}`}>({status.detalhe})</span>
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })}
 
-        {/* Desceu no Ranking */}
-        {desceu && (
-          <div className="bg-dark-elevated p-3 rounded-xl border border-dark-border flex items-center gap-3">
-            <div className="text-2xl drop-shadow-md">📉</div>
-            <div>
-              <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Desceu no Ranking</p>
-              <p className="text-sm font-semibold text-text-primary truncate">
-                {desceu.username} <span className="text-red-400 text-xs font-bold ml-1">escorregou...</span>
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Lanterna */}
-        {profiles.length > 1 && (
-          <div className="bg-dark-elevated p-3 rounded-xl border border-dark-border flex items-center gap-3">
-            <div className="text-2xl drop-shadow-md">🐢</div>
-            <div>
-              <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Lanterna</p>
-              <p className="text-sm font-semibold text-text-primary truncate">
-                {lanterna.username} <span className="text-text-muted text-xs ml-1">({lanterna.pontos_total} pts)</span>
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Zikado do Dia */}
+        {/* Zikado do Dia (fora do .map dos grupos) */}
         {zikadoNome && (
-          <div className="bg-purple-900/20 p-3 rounded-xl border border-purple-500/30 flex items-center gap-3">
+          <div className="bg-purple-900/20 py-3.5 px-4 rounded-xl border border-purple-500/30 flex items-center gap-3">
             <div className="text-2xl drop-shadow-md">🧿</div>
             <div>
               <p className="text-[10px] text-purple-400 uppercase font-bold tracking-wider">Zikado da Rodada</p>
@@ -175,11 +305,10 @@ async function MuralSocial() {
         )}
       </div>
 
-      {/* Botão de Zika */}
-      {currentUser && profiles && (
-        <div className="mt-4 pt-4 border-t border-dark-border">
+      {currentUser && sortedProfiles && (
+        <div className="border-t border-dark-border w-full pt-5">
           <ZikaButton
-            profiles={profiles.map(p => ({ id: p.id, username: p.username, avatar_url: p.avatar_url }))}
+            profiles={sortedProfiles.map(p => ({ id: p.id, username: p.username, avatar_url: p.avatar_url }))}
             currentUserId={currentUser.id}
           />
         </div>
@@ -203,11 +332,11 @@ export default async function HomePage() {
   const displayName = profile?.username ?? user?.email?.split("@")[0] ?? "Jogador";
 
   return (
-    <div className="page-enter min-h-dvh bg-pitch-black">
+    <div className="page-enter min-h-dvh bg-pitch-black w-full flex flex-col items-center gap-6">
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-40 bg-pitch-black/85 backdrop-blur-xl border-b border-dark-border/80">
-        <div className="px-5 py-4 max-w-[1280px] mx-auto flex items-center justify-between">
+      <header className="sticky top-4 z-40 bg-pitch-black/85 backdrop-blur-xl border border-dark-border/80 w-[calc(100%-2rem)] mx-auto pt-6 pb-4 px-4 rounded-2xl shadow-lg">
+        <div className="max-w-7xl w-full mx-auto flex justify-between items-center gap-4">
           {/* Lado Esquerdo: Avatar + Nome */}
           <div className="flex items-center gap-4">
             <Avatar
@@ -225,7 +354,7 @@ export default async function HomePage() {
 
           {/* Lado Direito: Pontos + Logout */}
           <div className="flex items-center gap-3">
-            <div className="bg-dark-card border border-dark-border px-4 py-2 rounded-xl shadow-sm text-right">
+            <div className="bg-dark-card border border-dark-border px-5 py-2.5 rounded-xl shadow-sm text-right">
               <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Pontos</p>
               <p className="text-xl font-black text-neon-400 leading-none mt-1 tracking-tight">
                 {profile?.pontos_total ?? 0}
@@ -237,28 +366,28 @@ export default async function HomePage() {
       </header>
 
       {/* ── Faixa Copa 2026 (Parallax) ── */}
-      <ParallaxBanner text="🏆 Copa do Mundo 2026" />
+      <div className="w-[calc(100%-2rem)] mx-auto max-w-7xl rounded-2xl overflow-hidden">
+        <ParallaxBanner text="🏆 Copa do Mundo 2026" />
+      </div>
 
       {/* ── Conteúdo Principal ── */}
-      <main className="px-4 sm:px-6 py-10 max-w-[1280px] mx-auto">
+      <main className="w-[calc(100%-2rem)] mx-auto max-w-7xl flex flex-col gap-y-6">
         <BetsProvider>
-          <AnimatedCards>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+          <AnimatedCards className="w-full">
+            <div className="w-full flex flex-col lg:flex-row gap-6 lg:gap-4 items-start w-full">
 
               {/* Coluna Esquerda (Mural) - Último no mobile */}
-              <div data-animate-card className="lg:col-span-4 order-3 lg:order-1">
+              <div data-animate-card className="flex-1 w-full order-3 lg:order-1 flex flex-col h-fit">
                 <MuralSocial />
               </div>
 
               {/* Coluna Central (Jogos) - Primeiro no mobile */}
-              <div data-animate-card className="lg:col-span-4 order-1 lg:order-2">
-                <div className="rounded-2xl bg-dark-card border border-dark-border shadow-md p-5">
-                  <LiveMatchesFeed />
-                </div>
+              <div data-animate-card className="flex-1 w-full order-1 lg:order-2 flex flex-col h-fit">
+                <LiveMatchesFeed />
               </div>
 
               {/* Coluna Direita (Meus Palpites) - Segundo no mobile */}
-              <div data-animate-card className="lg:col-span-4 order-2 lg:order-3">
+              <div data-animate-card className="flex-1 w-full order-2 lg:order-3 flex flex-col h-fit">
                 <UserBetsSidebar />
               </div>
 

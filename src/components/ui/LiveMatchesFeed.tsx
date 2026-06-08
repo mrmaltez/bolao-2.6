@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ─── Tipagem da football-data.org ────────────────────────────────────────────
 interface FDTeam {
@@ -157,9 +158,9 @@ function MatchCard({
       className={`rounded-xl bg-dark-card border shadow-md transition-all duration-300 ${isLive ? "border-neon-500 shadow-[0_0_20px_rgba(255,107,0,0.25)] animate-pulse-neon" : "border-dark-border"
         }`}
     >
-      <div className="px-5 py-4">
+      <div className="flex flex-col gap-5 p-5">
         {/* Header: fase + status + horário */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between">
           <span className="text-[10px] tracking-widest uppercase text-text-muted font-medium">
             {match.group ?? match.stage.replace(/_/g, " ")}
           </span>
@@ -202,7 +203,7 @@ function MatchCard({
 
             {/* Placar Real (Se o jogo começou/terminou) */}
             {(isLive || isFinished) && hasRealScore && (
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2">
                 <span className={`text-2xl font-black ${isLive ? "text-neon-400" : "text-text-primary"}`}>
                   {match.score.fullTime.home}
                 </span>
@@ -224,8 +225,8 @@ function MatchCard({
                 disabled={isLocked || isSaving}
                 placeholder="-"
                 className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-all duration-200 ${isLocked
-                    ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
-                    : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
+                  ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
+                  : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
                   }`}
                 aria-label={`Palpite gols ${match.homeTeam.shortName}`}
               />
@@ -247,8 +248,8 @@ function MatchCard({
                 disabled={isLocked || isSaving}
                 placeholder="-"
                 className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-all duration-200 ${isLocked
-                    ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
-                    : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
+                  ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
+                  : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
                   }`}
                 aria-label={`Palpite gols ${match.awayTeam.shortName}`}
               />
@@ -280,17 +281,17 @@ function MatchCard({
 
         {/* Action Button & Feedback (Só mostra se não estiver bloqueado) */}
         {!isLocked && (
-          <div className="mt-4 pt-4 border-t border-dark-border flex flex-col items-center">
+          <div className="pt-4 border-t border-dark-border flex flex-col items-center gap-2">
             {saveStatus === "error" && (
-              <p className="text-xs text-red-400 mb-2 font-medium text-center">{errorMessage}</p>
+              <p className="text-xs text-red-400 font-medium text-center">{errorMessage}</p>
             )}
 
             <button
               onClick={handleSave}
               disabled={isSaving || isLocked || betHome === "" || betAway === ""}
               className={`w-full max-w-[200px] py-2 px-4 rounded-lg text-xs font-bold tracking-widest uppercase transition-all duration-300 border ${saveStatus === "success"
-                  ? "bg-green-500/10 text-green-400 border-green-500/50"
-                  : "bg-transparent text-neon-400 border-neon-500/50 hover:bg-neon-500/10 hover:border-neon-500 hover:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-neon-500/50 disabled:hover:drop-shadow-none"
+                ? "bg-green-500/10 text-green-400 border-green-500/50"
+                : "bg-transparent text-neon-400 border-neon-500/50 hover:bg-neon-500/10 hover:border-neon-500 hover:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-neon-500/50 disabled:hover:drop-shadow-none"
                 }`}
             >
               {isSaving ? "Salvando..." : saveStatus === "success" ? "✔ Salvo" : "Salvar Palpite"}
@@ -332,7 +333,9 @@ export function LiveMatchesFeed() {
   const { matches, userBets, loading, error, updateLocalBet } = useBets();
 
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const [hasInitializedDay, setHasInitializedDay] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right">("right");
+  const touchStartX = useRef<number | null>(null);
 
   // Agrupar matches por dia (YYYY-MM-DD no fuso local)
   const groupedMatches = useMemo(() => {
@@ -357,32 +360,55 @@ export function LiveMatchesFeed() {
   // Array ordenado de chaves de data
   const dayKeys = useMemo(() => Object.keys(groupedMatches).sort(), [groupedMatches]);
 
-  // Sincronizar Swipe com o Estado
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-    const scrollLeft = container.scrollLeft;
-    const width = container.clientWidth;
+  useEffect(() => {
+    if (!hasInitializedDay && dayKeys.length > 0) {
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-    const newIndex = Math.round(scrollLeft / width);
-    if (newIndex !== currentDayIndex && newIndex >= 0 && newIndex < dayKeys.length) {
+      let index = dayKeys.indexOf(todayStr);
+      if (index === -1) {
+        index = dayKeys.findIndex(date => date > todayStr);
+      }
+
+      const initialIndex = index !== -1 ? index : dayKeys.length - 1;
+      setCurrentDayIndex(initialIndex);
+      setHasInitializedDay(true);
+
+    }
+  }, [dayKeys, hasInitializedDay]);
+
+  // Sincronizar Swipe com o Estado
+  // (Removido para usar renderização condicional)
+
+  // Navegação pelas Setas
+
+  const navigateDay = (direction: 1 | -1) => {
+    const newIndex = currentDayIndex + direction;
+    if (newIndex >= 0 && newIndex < dayKeys.length) {
+      setSlideDirection(direction === 1 ? "right" : "left");
       setCurrentDayIndex(newIndex);
     }
   };
 
-  // Navegação pelas Setas
-  const navigateDay = (direction: 1 | -1) => {
-    const newIndex = currentDayIndex + direction;
-    if (newIndex >= 0 && newIndex < dayKeys.length) {
-      setCurrentDayIndex(newIndex);
+  // Navegação por Swipe (Touch)
 
-      if (carouselRef.current) {
-        const width = carouselRef.current.clientWidth;
-        carouselRef.current.scrollTo({
-          left: newIndex * width,
-          behavior: "smooth",
-        });
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        navigateDay(1); // Swipe esquerda -> próximo dia
+      } else {
+        navigateDay(-1); // Swipe direita -> dia anterior
       }
     }
+    touchStartX.current = null;
   };
 
   if (loading) {
@@ -432,10 +458,14 @@ export function LiveMatchesFeed() {
   const currentKey = dayKeys[currentDayIndex];
 
   return (
-    <section aria-labelledby="rodada-heading" className="flex flex-col w-full max-w-full overflow-hidden">
-
+    <section 
+      aria-labelledby="rodada-heading" 
+      className="flex flex-col gap-4 w-full max-w-full overflow-hidden box-border px-4 pb-6"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Navegação Diária */}
-      <div className="flex items-center justify-between mb-4 bg-dark-card border border-dark-border rounded-xl p-2 shadow-sm">
+      <div className="flex items-center justify-between bg-dark-card/50 border border-dark-border rounded-xl px-4 py-3 shadow-sm">
         <button
           onClick={() => navigateDay(-1)}
           disabled={currentDayIndex === 0}
@@ -447,9 +477,11 @@ export function LiveMatchesFeed() {
           </svg>
         </button>
 
-        <h2 id="rodada-heading" className="text-sm font-bold text-text-primary tracking-wide text-center">
-          {formatDayHeader(currentKey)}
-        </h2>
+        <div className="flex flex-col items-center">
+          <h2 id="rodada-heading" className="text-sm font-bold text-text-primary tracking-wide text-center">
+            {formatDayHeader(currentKey)}
+          </h2>
+        </div>
 
         <button
           onClick={() => navigateDay(1)}
@@ -463,36 +495,32 @@ export function LiveMatchesFeed() {
         </button>
       </div>
 
-      {/* Carrossel de Dias (Swipe Horizontal) */}
-      <div
-        ref={carouselRef}
-        onScroll={handleScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-2"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        {dayKeys.map((key) => (
-          <div key={key} className="w-full flex-shrink-0 snap-center px-1">
-            <div className="space-y-4">
-              {groupedMatches[key].map((match) => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  userBet={userBets[match.id]}
-                  onSaveSuccess={(home, away) => updateLocalBet(match.id, home, away)}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Lista de Partidas do Dia (Apenas o ativo) */}
+      <AnimatePresence mode="wait">
+        <motion.div 
+          key={currentKey}
+          initial={{ x: 20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -20, opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeInOut' }}
+          className="rounded-2xl bg-dark-card border border-dark-border shadow-md p-4 w-full"
+        >
+        <div className="flex flex-col gap-5">
+          {groupedMatches[currentKey]?.map((match) => (
+            <MatchCard
+              key={match.id}
+              match={match}
+              userBet={userBets[match.id]}
+              onSaveSuccess={(home, away) => updateLocalBet(match.id, home, away)}
+            />
+          ))}
 
-      {/* Estilo local para esconder scrollbar no Webkit caso global falhe */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}} />
+          {(!groupedMatches[currentKey] || groupedMatches[currentKey].length === 0) && (
+            <p className="text-center text-text-muted text-sm py-4">Nenhum jogo para este dia.</p>
+          )}
+        </div>
+        </motion.div>
+      </AnimatePresence>
 
     </section>
   );
