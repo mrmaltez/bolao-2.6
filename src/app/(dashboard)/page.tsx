@@ -21,10 +21,11 @@ async function MuralSocial() {
   const supabase = await createClient();
 
   // 1. Buscar perfis ordenados
-  const { data: profiles } = await supabase
+  const { data: profilesRaw } = await supabase
     .from("profiles")
     .select("id, username, avatar_url, pontos_total")
     .order("pontos_total", { ascending: false });
+  const profiles = (profilesRaw || []) as any[];
 
   // Buscar o zikado do dia (mais votado de ontem)
   const zikadoNome = await getZikadosDoDia();
@@ -78,10 +79,10 @@ async function MuralSocial() {
   }
 
   // ── 1. Ordenar por Pontos (único critério) ──
-  const sortedProfiles = [...profiles].sort((a, b) => b.pontos_total - a.pontos_total);
+  const sortedProfiles = [...profiles].sort((a: any, b: any) => b.pontos_total - a.pontos_total);
 
   // ── 2. Atribuir posições com empates (mesma pontuação = mesma posição) ──
-  const isTied = (a: typeof profiles[0], b: typeof profiles[0]) => a.pontos_total === b.pontos_total;
+  const isTied = (a: any, b: any) => a.pontos_total === b.pontos_total;
 
   const positions: number[] = [];
   for (let i = 0; i < sortedProfiles.length; i++) {
@@ -122,34 +123,34 @@ async function MuralSocial() {
 
       // Calcular pontos do último dia por user
       const ultimoDiaPts: Record<string, number> = {};
-      (lastDayBets ?? []).forEach((bet: { user_id: string; pontos: number | null }) => {
+      (lastDayBets ?? []).forEach((bet: any) => {
         ultimoDiaPts[bet.user_id] = (ultimoDiaPts[bet.user_id] || 0) + (bet.pontos || 0);
       });
 
       // Ranking anterior
-      const anterior = sortedProfiles.map(p => ({
+      const anterior = sortedProfiles.map((p: any) => ({
         ...p,
         pontos_total: p.pontos_total - (ultimoDiaPts[p.id] ?? 0),
       }));
-      anterior.sort((a, b) => b.pontos_total - a.pontos_total);
+      anterior.sort((a: any, b: any) => b.pontos_total - a.pontos_total);
 
       // Posições anteriores com empate
       const posAnt: number[] = [];
       for (let i = 0; i < anterior.length; i++) {
         posAnt.push(i === 0 ? 0 : isTied(anterior[i], anterior[i - 1]) ? posAnt[i - 1] : i);
       }
-      anterior.forEach((p, idx) => { posAnteriorMap[p.id] = posAnt[idx]; });
+      anterior.forEach((p: any, idx: number) => { posAnteriorMap[p.id] = posAnt[idx]; });
     }
   }
 
   // ── 4. Agrupar em gruposDeClassificacao via reduce (somente por pontos) ──
   type GrupoClassificacao = {
     pontos: number;
-    usuarios: typeof profiles[0][];
+    usuarios: any[];
   };
 
-  const gruposDeClassificacao: GrupoClassificacao[] = sortedProfiles.reduce<GrupoClassificacao[]>((acc, user) => {
-    const grupoExistente = acc.find(g => g.pontos === user.pontos_total);
+  const gruposDeClassificacao: GrupoClassificacao[] = sortedProfiles.reduce<GrupoClassificacao[]>((acc: any[], user: any) => {
+    const grupoExistente = acc.find((g: any) => g.pontos === user.pontos_total);
     if (grupoExistente) {
       grupoExistente.usuarios.push(user);
     } else {
@@ -166,7 +167,7 @@ async function MuralSocial() {
 
   // ── 5. Função para determinar emoji, label e detalhe de cada grupo pelo INDEX ──
   function getGrupoStatus(grupo: GrupoClassificacao, index: number, total: number) {
-    const nomes = grupo.usuarios.map(u => u.username).join(", ");
+    const nomes = grupo.usuarios.map((u: any) => u.username).join(", ");
     const isMulti = grupo.usuarios.length > 1;
 
     // PRIMEIRO GRUPO (index 0)
@@ -308,7 +309,7 @@ async function MuralSocial() {
       {currentUser && sortedProfiles && (
         <div className="border-t border-dark-border w-full pt-5">
           <ZikaButton
-            profiles={sortedProfiles.map(p => ({ id: p.id, username: p.username, avatar_url: p.avatar_url }))}
+            profiles={sortedProfiles.map((p: any) => ({ id: p.id, username: p.username, avatar_url: p.avatar_url }))}
             currentUserId={currentUser.id}
           />
         </div>
