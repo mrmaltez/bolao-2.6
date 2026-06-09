@@ -13,77 +13,40 @@ export default function LoginPage({
   searchParams: Promise<{ error?: string; signup?: string }>;
 }) {
   return (
-    <main className="min-h-dvh bg-pitch-black flex flex-col items-center justify-center px-6 py-12 page-enter">
-      {/* Background decorativo */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        aria-hidden="true"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(212,160,23,0.12) 0%, transparent 70%)",
-        }}
-      />
-
-      {/* Estrela decorativa top */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-neon-600/40 text-xs tracking-[0.4em] uppercase font-light select-none">
-        ✦ Copa do Mundo 2026 ✦
-      </div>
-
-      <div className="relative w-full max-w-sm">
-        {/* Logo / Título */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-dark-card border border-dark-border mb-6 shadow-neon-glow relative">
-            <span
-              className="text-4xl"
-              role="img"
-              aria-label="troféu"
-              style={{ filter: "drop-shadow(0 0 8px rgba(212,160,23,0.6))" }}
-            >
-              🏆
-            </span>
-            {/* Anel pulsante */}
-            <div className="absolute inset-0 rounded-full border border-neon-600/30 animate-pulse-neon" />
-          </div>
-
-          <h1 className="text-4xl font-black text-text-primary tracking-tight leading-tight">
-            Bolão
-          </h1>
-          <p className="text-xl font-bold text-neon-500 mt-1 uppercase tracking-widest">
-            Copa 2026
-          </p>
-          <p className="text-text-muted text-xs tracking-widest uppercase mt-3">
-            Entre para disputar com a rapaziada
-          </p>
+    <main className="relative z-10 w-full min-h-screen flex items-center justify-center page-enter">
+      <div className="w-[calc(100%-2rem)] mx-auto max-w-md bg-dark-card px-8 py-10 rounded-2xl shadow-2xl flex flex-col gap-6 border border-dark-border">
+        {/* Cabeçalho do Card */}
+        <div className="flex flex-col items-center">
+          <span className="text-4xl mb-2" role="img" aria-label="troféu">🏆</span>
+          <h1 className="text-2xl font-bold text-center text-white">Bem-vindo ao Bolão</h1>
+          <p className="text-gray-400 text-center text-sm mt-1">Faça login para continuar</p>
         </div>
 
         {/* Mensagem de cadastro realizado */}
         <SignupSuccessMessage searchParams={searchParams} />
 
-        {/* Card do formulário */}
-        <div className="bg-dark-card border border-dark-border rounded-xl p-6 shadow-md">
-          <LoginForm />
+        <LoginForm />
 
-          <div className="relative my-6">
-            <hr className="neon-divider" />
-            <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 px-3 bg-dark-card text-xs text-text-muted">
-              ou
-            </span>
-          </div>
-
-          <p className="text-center text-sm text-text-secondary">
-            Não tem conta?{" "}
-            <Link
-              href="/cadastro"
-              id="go-to-signup-link"
-              className="text-neon-400 font-medium hover:text-neon-300 transition-colors underline underline-offset-2"
-            >
-              Criar conta grátis
-            </Link>
-          </p>
+        <div className="relative mt-2">
+          <hr className="neon-divider" />
+          <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 px-3 bg-dark-card text-xs text-text-muted">
+            ou
+          </span>
         </div>
 
+        <p className="text-center text-sm text-text-secondary">
+          Não tem conta?{" "}
+          <Link
+            href="/cadastro"
+            id="go-to-signup-link"
+            className="text-neon-400 font-medium hover:text-neon-300 transition-colors underline underline-offset-2"
+          >
+            Criar conta grátis
+          </Link>
+        </p>
+
         {/* Footer */}
-        <p className="text-center text-xs text-text-muted mt-6">
+        <p className="text-center text-xs text-text-muted">
           Ao entrar, você concorda com as regras do bolão.
         </p>
       </div>

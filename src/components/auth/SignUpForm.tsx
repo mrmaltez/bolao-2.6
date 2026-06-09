@@ -15,7 +15,7 @@ const signUpSchema = z
       .max(30, "Máximo 30 caracteres")
       .regex(/^[a-zA-Z0-9_]+$/, "Apenas letras, números e _"),
     email: z.string().email("E-mail inválido"),
-    password: z.string().min(8, "Senha deve ter ao menos 8 caracteres"),
+    password: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
     confirmPassword: z.string(),
     palpite_campeao: z
       .string()
@@ -33,11 +33,16 @@ const signUpSchema = z
 
 type SignUpData = z.infer<typeof signUpSchema>;
 
-// Seleções da Copa 2026 — para o datalist de sugestões
-const SELECOES = [
-  "Argentina", "Brasil", "França", "Alemanha", "Espanha", "Inglaterra",
-  "Portugal", "Holanda", "Bélgica", "Croácia", "Itália", "Uruguai",
-  "México", "Estados Unidos", "Canadá", "Marrocos", "Senegal", "Japão",
+// Seleções classificadas/prováveis para a Copa 2026 (ordem alfabética)
+const WORLD_CUP_TEAMS = [
+  "Alemanha", "Arábia Saudita", "Argentina", "Austrália", "Áustria",
+  "Bélgica", "Brasil", "Camarões", "Canadá", "Chile",
+  "Colômbia", "Coreia do Sul", "Costa do Marfim", "Croácia",
+  "Dinamarca", "Equador", "Espanha", "Estados Unidos",
+  "França", "Gana", "Holanda", "Inglaterra",
+  "Itália", "Japão", "Marrocos", "México",
+  "Nigéria", "Paraguai", "Peru", "Polônia",
+  "Portugal", "Senegal", "Sérvia", "Suíça", "Uruguai",
 ];
 
 export function SignUpForm() {
@@ -84,10 +89,10 @@ export function SignUpForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6" noValidate>
       {/* Username */}
-      <div className="space-y-1.5">
-        <label htmlFor="signup-username" className="block text-xs font-medium tracking-widest uppercase text-text-secondary">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="signup-username" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
           Apelido no Bolão
         </label>
         <input
@@ -96,7 +101,7 @@ export function SignUpForm() {
           autoComplete="username"
           placeholder="Ex: RafahGol, Cris10, ZéDoBolão"
           {...register("username")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
+          className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary placeholder:text-text-muted"
         />
         {errors.username && (
           <p className="text-xs text-red-400">{errors.username.message}</p>
@@ -104,8 +109,8 @@ export function SignUpForm() {
       </div>
 
       {/* E-mail */}
-      <div className="space-y-1.5">
-        <label htmlFor="signup-email" className="block text-xs font-medium tracking-widest uppercase text-text-secondary">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="signup-email" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
           E-mail
         </label>
         <input
@@ -114,7 +119,7 @@ export function SignUpForm() {
           autoComplete="email"
           placeholder="seuemail@exemplo.com"
           {...register("email")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
+          className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary placeholder:text-text-muted"
         />
         {errors.email && (
           <p className="text-xs text-red-400">{errors.email.message}</p>
@@ -123,8 +128,8 @@ export function SignUpForm() {
 
       {/* Senha */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label htmlFor="signup-password" className="block text-xs font-medium tracking-widest uppercase text-text-secondary">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="signup-password" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
             Senha
           </label>
           <input
@@ -133,14 +138,14 @@ export function SignUpForm() {
             autoComplete="new-password"
             placeholder="••••••••"
             {...register("password")}
-            className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
+            className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary placeholder:text-text-muted"
           />
           {errors.password && (
             <p className="text-xs text-red-400">{errors.password.message}</p>
           )}
         </div>
-        <div className="space-y-1.5">
-          <label htmlFor="signup-confirm-password" className="block text-xs font-medium tracking-widest uppercase text-text-secondary">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="signup-confirm-password" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
             Confirmar
           </label>
           <input
@@ -149,7 +154,7 @@ export function SignUpForm() {
             autoComplete="new-password"
             placeholder="••••••••"
             {...register("confirmPassword")}
-            className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
+            className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary placeholder:text-text-muted"
           />
           {errors.confirmPassword && (
             <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>
@@ -157,55 +162,55 @@ export function SignUpForm() {
         </div>
       </div>
 
-      {/* Divisor temático */}
-      <div className="relative py-4 my-2">
-        <hr className="neon-divider" />
-        <span className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 px-3 bg-dark-card text-[11px] text-neon-500 font-bold uppercase tracking-widest">
-          ⚽ Seus Palpites Especiais
-        </span>
-      </div>
+      {/* Seção de Palpites Especiais agrupada visualmente */}
+      <div className="bg-black/30 p-4 rounded-xl border border-gray-800 flex flex-col gap-5 mt-2">
+        {/* Divisor temático removido ou substituído por título mais limpo */}
+        <div className="text-center">
+          <span className="text-[11px] text-neon-500 font-bold uppercase tracking-widest">
+            ⚽ Seus Palpites Especiais
+          </span>
+        </div>
 
-      {/* Palpite Campeão */}
-      <div className="space-y-1.5">
-        <label htmlFor="signup-campeao" className="block text-xs font-medium tracking-widest uppercase text-text-secondary">
-          🏆 Palpite Campeão
-        </label>
-        <input
-          id="signup-campeao"
-          type="text"
-          list="selecoes-list"
-          placeholder="Qual seleção vai ser Campeã?"
-          {...register("palpite_campeao")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
-        />
-        <datalist id="selecoes-list">
-          {SELECOES.map((s) => (
-            <option key={s} value={s} />
-          ))}
-        </datalist>
-        {errors.palpite_campeao && (
-          <p className="text-xs text-red-400">{errors.palpite_campeao.message}</p>
-        )}
-      </div>
+        {/* Palpite Campeão */}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="signup-campeao" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
+            🏆 Palpite Campeão
+          </label>
+          <select
+            id="signup-campeao"
+            defaultValue=""
+            {...register("palpite_campeao")}
+            className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary"
+          >
+            <option value="" disabled>Selecione a seleção campeã...</option>
+            {WORLD_CUP_TEAMS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          {errors.palpite_campeao && (
+            <p className="text-xs text-red-400">{errors.palpite_campeao.message}</p>
+          )}
+        </div>
 
-      {/* Palpite Final */}
-      <div className="space-y-1.5">
-        <label htmlFor="signup-final" className="block text-xs font-medium tracking-widest uppercase text-text-secondary">
-          🥇 Palpite da Final
-        </label>
-        <input
-          id="signup-final"
-          type="text"
-          placeholder="Ex: Brasil vs Argentina"
-          {...register("palpite_final")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
-        />
-        {errors.palpite_final && (
-          <p className="text-xs text-red-400">{errors.palpite_final.message}</p>
-        )}
-        <p className="text-xs text-text-muted">
-          Informe os dois times que disputarão a Final
-        </p>
+        {/* Palpite Final */}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="signup-final" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
+            🥇 Palpite da Final
+          </label>
+          <input
+            id="signup-final"
+            type="text"
+            placeholder="Ex: Brasil vs Argentina"
+            {...register("palpite_final")}
+            className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary placeholder:text-text-muted"
+          />
+          {errors.palpite_final && (
+            <p className="text-xs text-red-400">{errors.palpite_final.message}</p>
+          )}
+          <p className="text-xs text-text-muted mt-0.5">
+            Informe os dois times que disputarão a Final
+          </p>
+        </div>
       </div>
 
       {/* Erro do servidor */}
@@ -220,7 +225,7 @@ export function SignUpForm() {
         id="signup-submit-btn"
         type="submit"
         disabled={isLoading}
-        className="w-full py-4 rounded-lg font-semibold text-sm tracking-wide text-pitch-black bg-neon-gradient hover:opacity-90 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-3.5 rounded-lg font-semibold text-sm tracking-wide text-pitch-black bg-neon-gradient hover:opacity-90 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">

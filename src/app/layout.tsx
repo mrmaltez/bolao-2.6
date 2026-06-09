@@ -39,11 +39,18 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="bg-pitch-black text-text-primary antialiased w-full min-h-screen flex flex-col items-center justify-start overflow-x-hidden">
+      <body className="bg-pitch-black text-text-primary antialiased w-full min-h-screen flex flex-col items-center justify-start overflow-x-hidden relative">
         <Suspense fallback={null}>
           <ZikaBlockerWrapper />
         </Suspense>
-        {children}
+        
+        {/* Imagem de fundo global imersiva */}
+        <div className="fixed inset-0 z-0 bg-[url('/copa1.jpg')] bg-cover bg-center opacity-10 pointer-events-none"></div>
+        
+        {/* Conteúdo Principal */}
+        <div className="relative z-10 w-full flex-1 flex flex-col">
+          {children}
+        </div>
       </body>
     </html>
   );

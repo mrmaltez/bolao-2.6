@@ -50,10 +50,10 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6" noValidate>
       {/* E-mail */}
-      <div className="space-y-1.5">
-        <label htmlFor="login-email" className="block text-xs font-medium tracking-widest uppercase text-text-secondary">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="login-email" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
           E-mail
         </label>
         <input
@@ -62,16 +62,16 @@ export function LoginForm() {
           autoComplete="email"
           placeholder="seuemail@exemplo.com"
           {...register("email")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
+          className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary placeholder:text-text-muted"
         />
         {errors.email && (
-          <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>
+          <p className="text-xs text-red-400">{errors.email.message}</p>
         )}
       </div>
 
       {/* Senha */}
-      <div className="space-y-1.5">
-        <label htmlFor="login-password" className="block text-xs font-medium tracking-widest uppercase text-text-secondary">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="login-password" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
           Senha
         </label>
         <input
@@ -80,10 +80,10 @@ export function LoginForm() {
           autoComplete="current-password"
           placeholder="••••••••"
           {...register("password")}
-          className="w-full px-4 py-3.5 rounded-lg bg-dark-elevated border border-dark-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-500 focus:ring-1 focus:ring-neon-500/40 transition-all duration-200 text-sm"
+          className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary placeholder:text-text-muted"
         />
         {errors.password && (
-          <p className="text-xs text-red-400 mt-1">{errors.password.message}</p>
+          <p className="text-xs text-red-400">{errors.password.message}</p>
         )}
       </div>
 
@@ -99,7 +99,7 @@ export function LoginForm() {
         id="login-submit-btn"
         type="submit"
         disabled={isLoading}
-        className="w-full py-4 rounded-lg font-semibold text-sm tracking-wide text-pitch-black bg-neon-gradient hover:opacity-90 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+        className="w-full py-3.5 rounded-lg font-semibold text-sm tracking-wide text-pitch-black bg-neon-gradient hover:opacity-90 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group mt-2"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">

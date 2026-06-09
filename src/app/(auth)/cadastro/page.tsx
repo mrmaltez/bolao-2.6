@@ -9,20 +9,10 @@ export const metadata: Metadata = {
 
 export default function CadastroPage() {
   return (
-    <main className="min-h-dvh bg-pitch-black flex flex-col items-center justify-start px-6 py-12 page-enter">
-      {/* Background decorativo */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        aria-hidden="true"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(212,160,23,0.1) 0%, transparent 70%)",
-        }}
-      />
-
-      <div className="relative w-full max-w-sm pb-12">
+    <main className="relative z-10 w-full min-h-screen flex items-center justify-center py-8 page-enter">
+      <div className="w-[calc(100%-2rem)] mx-auto max-w-md bg-dark-card px-8 py-10 rounded-2xl shadow-2xl flex flex-col gap-6 border border-dark-border">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center">
           <Link
             href="/login"
             id="back-to-login-link"
@@ -43,7 +33,7 @@ export default function CadastroPage() {
         </div>
 
         {/* Aviso Palpite Especial */}
-        <div className="mb-6 px-4 py-3.5 rounded-xl bg-neon-900/20 border border-neon-700/30 text-sm">
+        <div className="px-4 py-3.5 rounded-xl bg-neon-900/20 border border-neon-700/30 text-sm">
           <p className="text-neon-400 font-medium mb-1">⚽ Palpite Especial</p>
           <p className="text-text-secondary text-xs leading-relaxed">
             Acertar o Campeão e a Final valem pontos bônus no Ranking!
@@ -51,27 +41,24 @@ export default function CadastroPage() {
           </p>
         </div>
 
-        {/* Card do formulário */}
-        <div className="bg-dark-card border border-dark-border rounded-xl p-6 shadow-md">
-          <SignUpForm />
+        <SignUpForm />
 
-          <div className="relative my-6">
-            <hr className="neon-divider" />
-          </div>
-
-          <p className="text-center text-sm text-text-secondary">
-            Já tem conta?{" "}
-            <Link
-              href="/login"
-              id="go-to-login-link"
-              className="text-neon-400 font-medium hover:text-neon-300 transition-colors underline underline-offset-2"
-            >
-              Fazer login
-            </Link>
-          </p>
+        <div className="relative">
+          <hr className="neon-divider" />
         </div>
 
-        <p className="text-center text-xs text-text-muted mt-6 px-4">
+        <p className="text-center text-sm text-text-secondary">
+          Já tem conta?{" "}
+          <Link
+            href="/login"
+            id="go-to-login-link"
+            className="text-neon-400 font-medium hover:text-neon-300 transition-colors underline underline-offset-2"
+          >
+            Fazer login
+          </Link>
+        </p>
+
+        <p className="text-center text-xs text-text-muted">
           Ao criar sua conta, você concorda com as regras do bolão.
           Os palpites de Campeão e Final não poderão ser alterados após a Copa começar.
         </p>
