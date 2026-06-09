@@ -54,7 +54,7 @@ async function MuralSocial() {
     .eq("status", "FINISHED")
     .order("match_start_time", { ascending: false })
     .limit(1)
-    .single();
+    .single() as { data: { match_start_time: string } | null };
 
   let dataAtualizacao = "Recentemente";
   if (lastMatch?.match_start_time) {
@@ -95,7 +95,7 @@ async function MuralSocial() {
     .eq("status", "FINISHED")
     .order("match_start_time", { ascending: false })
     .limit(1)
-    .single();
+    .single() as { data: { match_start_time: string } | null };
 
   const posAnteriorMap: Record<string, number> = {};
 
