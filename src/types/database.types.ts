@@ -78,7 +78,7 @@ export interface Database {
           away_team_flag?: string | null;
           home_score?: number | null;
           away_score?: number | null;
-          match_start_time: string;
+          match_start_time?: string;
           status?: "scheduled" | "live" | "finished" | "postponed";
           stage?: "group" | "round_of_16" | "quarter" | "semi" | "third_place" | "final";
           group_name?: string | null;
@@ -143,11 +143,37 @@ export interface Database {
           avatar_url: string | null;
           pontos_total: number;
           position: number;
+          // ── Campos do Mural Social (null até o primeiro sync) ──
+          delta_posicao: number | null;
+          status: "lider" | "subiu" | "desceu" | "manteve" | "lanterna" | "novo" | null;
+          posicao_anterior: number | null;
         };
       };
     };
     Functions: {
-      [_ in never]: never;
+      gerar_snapshot: {
+        Args: { p_match_id: string };
+        Returns: void;
+      };
+      calcular_mural_social: {
+        Args: { p_match_id: string };
+        Returns: void;
+      };
+      get_mural_social: {
+        Args: { p_match_id: string };
+        Returns: {
+          user_id: string;
+          username: string;
+          avatar_url: string | null;
+          pontos_total: number;
+          posicao_atual: number;
+          posicao_anterior: number | null;
+          delta_posicao: number | null;
+          status: string;
+          label: string;
+          icone: string;
+        }[];
+      };
     };
     Enums: {
       match_status: "scheduled" | "live" | "finished" | "postponed";
@@ -156,8 +182,11 @@ export interface Database {
   };
 }
 
-// ─── Shorthand types ────────────────────────────────────────────────────────
+// ─── Shorthand types ─────────────────────────────────────────────────────────
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Match = Database["public"]["Tables"]["matches"]["Row"];
 export type Bet = Database["public"]["Tables"]["bets"]["Row"];
 export type RankingEntry = Database["public"]["Views"]["ranking_view"]["Row"];
+
+// Status possíveis do Mural Social
+export type MuralStatus = "lider" | "subiu" | "desceu" | "manteve" | "lanterna" | "novo";

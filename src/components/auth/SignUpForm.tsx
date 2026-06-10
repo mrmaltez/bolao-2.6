@@ -7,6 +7,21 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
+// ── Seleções ──────────────────────────────────────────────────────────────────
+
+const WORLD_CUP_TEAMS = [
+  "Alemanha", "Arábia Saudita", "Argentina", "Austrália", "Áustria",
+  "Bélgica", "Brasil", "Camarões", "Canadá", "Chile",
+  "Colômbia", "Coreia do Sul", "Costa do Marfim", "Croácia",
+  "Dinamarca", "Equador", "Espanha", "Estados Unidos",
+  "França", "Gana", "Holanda", "Inglaterra",
+  "Itália", "Japão", "Marrocos", "México",
+  "Nigéria", "Paraguai", "Peru", "Polônia",
+  "Portugal", "Senegal", "Sérvia", "Suíça", "Uruguai",
+];
+
+// ── Schema ────────────────────────────────────────────────────────────────────
+
 const signUpSchema = z
   .object({
     username: z
@@ -19,31 +34,32 @@ const signUpSchema = z
     confirmPassword: z.string(),
     palpite_campeao: z
       .string()
-      .min(2, "Informe o seu palpite para o Campeão")
-      .max(50, "Máximo 50 caracteres"),
-    palpite_final: z
+      .min(2, "Selecione o Campeão"),
+    palpite_final_time1: z
       .string()
-      .min(5, "Informe o confronto da Final (ex: Brasil vs Argentina)")
-      .max(100, "Máximo 100 caracteres"),
+      .min(2, "Selecione o 1º time da Final"),
+    palpite_final_time2: z
+      .string()
+      .min(2, "Selecione o 2º time da Final"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "As senhas não coincidem",
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+    (data) =>
+      !data.palpite_final_time1 ||
+      !data.palpite_final_time2 ||
+      data.palpite_final_time1 !== data.palpite_final_time2,
+    {
+      message: "Escolha duas seleções diferentes para a Final",
+      path: ["palpite_final_time2"],
+    }
+  );
 
 type SignUpData = z.infer<typeof signUpSchema>;
 
-// Seleções classificadas/prováveis para a Copa 2026 (ordem alfabética)
-const WORLD_CUP_TEAMS = [
-  "Alemanha", "Arábia Saudita", "Argentina", "Austrália", "Áustria",
-  "Bélgica", "Brasil", "Camarões", "Canadá", "Chile",
-  "Colômbia", "Coreia do Sul", "Costa do Marfim", "Croácia",
-  "Dinamarca", "Equador", "Espanha", "Estados Unidos",
-  "França", "Gana", "Holanda", "Inglaterra",
-  "Itália", "Japão", "Marrocos", "México",
-  "Nigéria", "Paraguai", "Peru", "Polônia",
-  "Portugal", "Senegal", "Sérvia", "Suíça", "Uruguai",
-];
+// ── Componente ────────────────────────────────────────────────────────────────
 
 export function SignUpForm() {
   const router = useRouter();
@@ -53,12 +69,20 @@ export function SignUpForm() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<SignUpData>({ resolver: zodResolver(signUpSchema) });
+
+  // Observa os dois selects da final para filtrar opções duplicadas
+  const time1 = watch("palpite_final_time1");
+  const time2 = watch("palpite_final_time2");
 
   const onSubmit = async (data: SignUpData) => {
     setIsLoading(true);
     setServerError(null);
+
+    // Compõe o campo palpite_final no mesmo formato que estava sendo salvo
+    const palpite_final = `${data.palpite_final_time1} vs ${data.palpite_final_time2}`;
 
     const supabase = createClient();
     const { error } = await supabase.auth.signUp({
@@ -68,7 +92,7 @@ export function SignUpForm() {
         data: {
           username: data.username,
           palpite_campeao: data.palpite_campeao,
-          palpite_final: data.palpite_final,
+          palpite_final,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -84,12 +108,17 @@ export function SignUpForm() {
       return;
     }
 
-    // Sucesso — redireciona para login com mensagem de confirmação
     router.push("/login?signup=success");
   };
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  const selectClass =
+    "w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary";
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6" noValidate>
+
       {/* Username */}
       <div className="flex flex-col gap-1">
         <label htmlFor="signup-username" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
@@ -162,9 +191,8 @@ export function SignUpForm() {
         </div>
       </div>
 
-      {/* Seção de Palpites Especiais agrupada visualmente */}
+      {/* ── Palpites Especiais ─────────────────────────────────────────────── */}
       <div className="bg-black/30 p-4 rounded-xl border border-gray-800 flex flex-col gap-5 mt-2">
-        {/* Divisor temático removido ou substituído por título mais limpo */}
         <div className="text-center">
           <span className="text-[11px] text-neon-500 font-bold uppercase tracking-widest">
             ⚽ Seus Palpites Especiais
@@ -180,7 +208,7 @@ export function SignUpForm() {
             id="signup-campeao"
             defaultValue=""
             {...register("palpite_campeao")}
-            className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary"
+            className={selectClass}
           >
             <option value="" disabled>Selecione a seleção campeã...</option>
             {WORLD_CUP_TEAMS.map((s) => (
@@ -192,23 +220,53 @@ export function SignUpForm() {
           )}
         </div>
 
-        {/* Palpite Final */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="signup-final" className="text-xs font-medium tracking-widest uppercase text-text-secondary">
+        {/* Palpite Final — dois selects lado a lado */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-medium tracking-widest uppercase text-text-secondary">
             🥇 Palpite da Final
           </label>
-          <input
-            id="signup-final"
-            type="text"
-            placeholder="Ex: Brasil vs Argentina"
-            {...register("palpite_final")}
-            className="w-full p-3 rounded-lg bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm text-text-primary placeholder:text-text-muted"
-          />
-          {errors.palpite_final && (
-            <p className="text-xs text-red-400">{errors.palpite_final.message}</p>
+
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            {/* Time 1 */}
+            <select
+              id="signup-final-time1"
+              defaultValue=""
+              {...register("palpite_final_time1")}
+              className={selectClass}
+            >
+              <option value="" disabled>Seleção 1...</option>
+              {WORLD_CUP_TEAMS.filter((s) => s !== time2).map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            {/* Separador */}
+            <span className="text-text-muted font-bold text-sm select-none">vs</span>
+
+            {/* Time 2 */}
+            <select
+              id="signup-final-time2"
+              defaultValue=""
+              {...register("palpite_final_time2")}
+              className={selectClass}
+            >
+              <option value="" disabled>Seleção 2...</option>
+              {WORLD_CUP_TEAMS.filter((s) => s !== time1).map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Erros dos dois selects */}
+          {errors.palpite_final_time1 && (
+            <p className="text-xs text-red-400">{errors.palpite_final_time1.message}</p>
           )}
+          {errors.palpite_final_time2 && (
+            <p className="text-xs text-red-400">{errors.palpite_final_time2.message}</p>
+          )}
+
           <p className="text-xs text-text-muted mt-0.5">
-            Informe os dois times que disputarão a Final
+            Escolha os dois times que disputarão a Final
           </p>
         </div>
       </div>
