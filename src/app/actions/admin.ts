@@ -3,9 +3,21 @@
 import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database.types";
 
-// ================================================================
-// SYNC PRINCIPAL (inalterado)
-// ================================================================
+
+// Mapeia todos os status da API football-data.org para os valores aceitos pelo banco
+function mapStatus(apiStatus: string | undefined): "SCHEDULED" | "LIVE" | "FINISHED" | "POSTPONED" {
+  switch ((apiStatus ?? "").toUpperCase()) {
+    case "FINISHED": return "FINISHED";
+    case "IN_PLAY": return "LIVE";
+    case "PAUSED": return "LIVE";
+    case "POSTPONED": return "POSTPONED";
+    case "CANCELLED": return "POSTPONED";
+    case "SUSPENDED": return "POSTPONED";
+    case "TIMED": return "SCHEDULED"; // API retorna TIMED para jogos agendados com horário
+    case "SCHEDULED": return "SCHEDULED";
+    default: return "SCHEDULED";
+  }
+}
 
 export async function syncMatchResults() {
   console.log("[Admin Sync] Iniciando sincronização de placares...");
@@ -14,7 +26,7 @@ export async function syncMatchResults() {
     const token = process.env.FOOTBALL_DATA_TOKEN;
     if (!token) throw new Error("FOOTBALL_DATA_TOKEN não configurada no servidor.");
 
-    const response = await fetch("https://api.football-data.org/v4/competitions/BSA/matches", {
+    const response = await fetch("https://api.football-data.org/v4/competitions/WC/matches", {
       headers: { "X-Auth-Token": token },
       cache: "no-store",
     });
@@ -24,7 +36,8 @@ export async function syncMatchResults() {
     const data = await response.json();
 
     if (data.matches?.length > 0) {
-      console.log("Status de um jogo de exemplo da API:", data.matches[0].status);
+      console.log(`[Admin Sync] Total de jogos recebidos da API: ${data.matches.length}`);
+      console.log("[Admin Sync] Status de um jogo de exemplo:", data.matches[0].status);
     }
 
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -35,49 +48,63 @@ export async function syncMatchResults() {
       serviceKey
     );
 
-    const finishedMatches =
-      data.matches?.filter(
-        (m: any) => m.status && m.status.toUpperCase() === "FINISHED"
-      ) || [];
+    const allMatches: any[] = data.matches || [];
 
-    if (finishedMatches.length === 0) {
-      console.log("[Admin Sync] Nenhuma partida finalizada no momento.");
-      return { success: true, count: 0, message: "Nenhum jogo finalizado encontrado." };
+    if (allMatches.length === 0) {
+      console.log("[Admin Sync] Nenhuma partida retornada pela API.");
+      return { success: true, count: 0, message: "Nenhum jogo encontrado na API." };
     }
 
-    const upsertData = finishedMatches.map((m: any) => ({
+    // ── PASSO 1: Upsert de TODOS os jogos (scheduled, live, finished) ──
+    // Antes só enviava jogos FINISHED — por isso a grade WC nunca aparecia.
+    const allUpsertData = allMatches.map((m: any) => ({
       id: m.id,
       home_team: m.homeTeam?.shortName || m.homeTeam?.name || "TBD",
       away_team: m.awayTeam?.shortName || m.awayTeam?.name || "TBD",
       match_start_time: m.utcDate,
       home_score: m.score?.fullTime?.home ?? null,
       away_score: m.score?.fullTime?.away ?? null,
-      status: (m.status ? m.status.toUpperCase() : "SCHEDULED") as any,
+      status: mapStatus(m.status),
     }));
 
-    const { error } = await adminClient
+    const { error: upsertError } = await adminClient
       .from("matches")
-      .upsert(upsertData, { onConflict: "id" });
+      .upsert(allUpsertData, { onConflict: "id" });
 
-    if (error) {
-      console.error("[Admin Sync] Erro detalhado do Supabase:", error);
-      throw new Error(`Falha no upsert: ${error.message}`);
+    if (upsertError) {
+      console.error("[Admin Sync] Erro no upsert de partidas:", upsertError);
+      throw new Error(`Falha no upsert: ${upsertError.message}`);
     }
 
-    // ── Calcula pontos ────────────────────────────────────────
+    console.log(`[Admin Sync] ${allUpsertData.length} partida(s) sincronizada(s) no banco.`);
+
+    // ── PASSO 2: Calcular pontos — só para jogos FINISHED com placar ──
+    const finishedMatches = allUpsertData.filter(
+      (m: any) => m.home_score !== null && m.away_score !== null
+    );
+
+    if (finishedMatches.length === 0) {
+      console.log("[Admin Sync] Nenhuma partida finalizada para calcular pontos.");
+      return {
+        success: true,
+        count: allUpsertData.length,
+        message: `${allUpsertData.length} jogo(s) sincronizado(s). Nenhum finalizado ainda.`,
+      };
+    }
+
     console.log("[Admin Sync] Calculando pontos dos usuários...");
-    const scoringPromises = upsertData
-      .filter((m: any) => m.home_score !== null && m.away_score !== null)
-      .map((m: any) => scoreMatches(adminClient, m.id, m.home_score, m.away_score));
+    const scoringPromises = finishedMatches.map((m: any) =>
+      scoreMatches(adminClient, m.id, m.home_score, m.away_score)
+    );
 
     await Promise.all(scoringPromises);
     console.log(`[Admin Sync] Motor de pontuação executado para ${scoringPromises.length} partidas.`);
 
-    // ── Mural Social ──────────────────────────────────────────
+    // ── PASSO 3: Mural Social ─────────────────────────────────
     const matchesOrdenadas = finishedMatches
       .slice()
       .sort((a: any, b: any) =>
-        new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime()
+        new Date(a.match_start_time).getTime() - new Date(b.match_start_time).getTime()
       );
 
     for (let i = 0; i < matchesOrdenadas.length; i++) {
@@ -86,20 +113,22 @@ export async function syncMatchResults() {
       await syncMuralSocial(adminClient, Number(match.id), isLatest);
     }
 
-    // ── Zika da Rodada ────────────────────────────────────────
+    // ── PASSO 4: Zika da Rodada ───────────────────────────────
     console.log("[Admin Sync] Aplicando punições de zika...");
-    const { punished } = await applyZikaPunishments(adminClient);
-    if (punished.length > 0) {
+    const { punished, skipped } = await applyZikaPunishments(adminClient);
+    if (skipped) {
+      console.log("[Admin Sync] Zika já aplicada hoje, sync ignorado.");
+    } else if (punished.length > 0) {
       console.log(`[Admin Sync] Zika aplicada para ${punished.length} jogador(es).`);
     } else {
       console.log("[Admin Sync] Nenhum voto de zika registrado hoje.");
     }
 
-    console.log(`[Admin Sync] Sincronização concluída! ${finishedMatches.length} partidas atualizadas.`);
+    console.log(`[Admin Sync] Sincronização concluída! ${allUpsertData.length} no banco · ${finishedMatches.length} pontuado(s).`);
     return {
       success: true,
-      count: finishedMatches.length,
-      message: `${finishedMatches.length} placar(es) sincronizado(s) com sucesso.`,
+      count: allUpsertData.length,
+      message: `${allUpsertData.length} jogo(s) sincronizado(s) · ${finishedMatches.length} finalizado(s) pontuado(s).`,
     };
 
   } catch (error: any) {
@@ -109,122 +138,81 @@ export async function syncMatchResults() {
 }
 
 // ================================================================
-// PALPITES ESPECIAIS — acionado manualmente pelo admin no fim do campeonato
+// PALPITES ESPECIAIS (campeão + finalistas)
 // ================================================================
 
-/**
- * Computa os pontos bônus de palpites especiais (Campeão + Final).
- * - Acertar o Campeão: +30 pts
- * - Acertar os dois finalistas (ordem não importa): +30 pts
- * - Máximo: 60 pts por usuário
- *
- * Idempotente: usuários com especiais_computados = true são ignorados,
- * então pode ser acionado mais de uma vez sem risco de duplicar pontos.
- *
- * @param campeao   Nome exato da seleção campeã (ex: "Brasil")
- * @param finalista1 Primeiro finalista (ex: "Brasil")
- * @param finalista2 Segundo finalista (ex: "Argentina")
- */
 export async function scoreSpecialBets(
   campeao: string,
   finalista1: string,
   finalista2: string
-): Promise<{ success: boolean; processed: number; error?: string }> {
-  console.log(`[Special Bets] Iniciando cômputo — Campeão: ${campeao} | Final: ${finalista1} vs ${finalista2}`);
-
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) {
-    return { success: false, processed: 0, error: "SUPABASE_SERVICE_ROLE_KEY não configurada." };
-  }
-
-  const adminClient = createSupabaseClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceKey
-  );
+): Promise<{ success: boolean; processed?: number; error?: string }> {
+  console.log(`[Special Bets] Processando — Campeão: ${campeao} | Final: ${finalista1} vs ${finalista2}`);
 
   try {
-    // Busca apenas quem ainda não teve os especiais computados
-    const { data: profiles, error: fetchError } = await (adminClient as any)
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada.");
+
+    const adminClient = createSupabaseClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      serviceKey
+    );
+
+    const { data: profiles, error: fetchError } = await adminClient
       .from("profiles")
-      .select("id, palpite_campeao, palpite_final, pontos_total, pontos_especiais")
-      .eq("especiais_computados", false);
+      .select("id, palpite_campeao, palpite_final, pontos_total");
 
-    if (fetchError) {
-      console.error("[Special Bets] Erro ao buscar profiles:", fetchError.message);
-      return { success: false, processed: 0, error: fetchError.message };
-    }
-
-    if (!profiles || profiles.length === 0) {
-      console.log("[Special Bets] Nenhum usuário pendente de cômputo.");
-      return { success: true, processed: 0 };
-    }
-
-    // Normaliza para comparação case-insensitive
-    const normalize = (s: string) => s?.trim().toLowerCase() ?? "";
-    const campeaoNorm = normalize(campeao);
-    const f1Norm = normalize(finalista1);
-    const f2Norm = normalize(finalista2);
+    if (fetchError) throw new Error(fetchError.message);
+    if (!profiles || profiles.length === 0) return { success: true, processed: 0 };
 
     let processed = 0;
 
     for (const profile of profiles) {
-      let pontosEspeciais = 0;
+      let bonus = 0;
 
-      // ── Acerto do Campeão ──────────────────────────────────
-      if (normalize(profile.palpite_campeao) === campeaoNorm) {
-        pontosEspeciais += 30;
-        console.log(`[Special Bets] ✅ Campeão acertado pelo user ${profile.id} (+30)`);
+      if (
+        profile.palpite_campeao &&
+        profile.palpite_campeao.trim().toLowerCase() === campeao.trim().toLowerCase()
+      ) {
+        bonus += 30;
+        console.log(`[Special Bets] ${profile.id} acertou o campeão (+30)`);
       }
 
-      // ── Acerto da Final (ordem não importa) ───────────────
       if (profile.palpite_final) {
-        // Suporta separadores "vs", "x" ou "X"
-        const partes = profile.palpite_final
-          .split(/\s+(?:vs|x|X)\s+/i)
-          .map((s: string) => normalize(s.trim()));
-
-        const [p1, p2] = partes;
+        const palpiteFinal = profile.palpite_final.trim().toLowerCase();
+        const f1 = finalista1.trim().toLowerCase();
+        const f2 = finalista2.trim().toLowerCase();
 
         const acertouFinal =
-          p1 !== undefined &&
-          p2 !== undefined &&
-          ((p1 === f1Norm && p2 === f2Norm) ||
-            (p1 === f2Norm && p2 === f1Norm));
+          palpiteFinal === `${f1} vs ${f2}` ||
+          palpiteFinal === `${f2} vs ${f1}`;
 
         if (acertouFinal) {
-          pontosEspeciais += 30;
-          console.log(`[Special Bets] ✅ Final acertada pelo user ${profile.id} (+30)`);
+          bonus += 30;
+          console.log(`[Special Bets] ${profile.id} acertou a final (+30)`);
         }
       }
 
-      // ── Atualiza profile ───────────────────────────────────
-      const novoTotal = (profile.pontos_total ?? 0) + pontosEspeciais;
+      if (bonus > 0) {
+        const novoTotal = (profile.pontos_total ?? 0) + bonus;
+        const { error: updateError } = await adminClient
+          .from("profiles")
+          .update({ pontos_total: novoTotal, updated_at: new Date().toISOString() })
+          .eq("id", profile.id);
 
-      const { error: updateError } = await (adminClient as any)
-        .from("profiles")
-        .update({
-          pontos_especiais: pontosEspeciais,
-          pontos_total: novoTotal,
-          especiais_computados: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", profile.id);
-
-      if (updateError) {
-        console.error(`[Special Bets] Erro ao atualizar user ${profile.id}:`, updateError.message);
-        continue;
+        if (updateError) {
+          console.error(`[Special Bets] Erro ao atualizar ${profile.id}:`, updateError.message);
+        } else {
+          processed++;
+        }
       }
-
-      console.log(`[Special Bets] User ${profile.id} — +${pontosEspeciais} pts especiais | Total: ${novoTotal}`);
-      processed++;
     }
 
-    console.log(`[Special Bets] ✅ Concluído — ${processed} usuário(s) processado(s).`);
+    console.log(`[Special Bets] Concluído. ${processed} usuário(s) receberam bônus.`);
     return { success: true, processed };
 
-  } catch (err: any) {
-    console.error("[Special Bets] Falha crítica:", err);
-    return { success: false, processed: 0, error: err.message };
+  } catch (error: any) {
+    console.error("[Special Bets] Falha:", error);
+    return { success: false, error: error.message || "Erro interno." };
   }
 }
 
@@ -234,7 +222,21 @@ export async function scoreSpecialBets(
 
 async function applyZikaPunishments(
   adminClient: SupabaseClient<Database>
-): Promise<{ punished: string[] }> {
+): Promise<{ punished: string[]; skipped: boolean }> {
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const { data: alreadyPunished } = await (adminClient as any)
+    .from("profiles")
+    .select("id")
+    .eq("zika_punished_date", todayStr)
+    .limit(1)
+    .maybeSingle();
+
+  if (alreadyPunished) {
+    console.log("[Zika] Punição já aplicada hoje, pulando.");
+    return { punished: [], skipped: true };
+  }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -248,10 +250,10 @@ async function applyZikaPunishments(
 
   if (error) {
     console.error("[Zika] Erro ao buscar votos:", error.message);
-    return { punished: [] };
+    return { punished: [], skipped: false };
   }
 
-  if (!votes || votes.length === 0) return { punished: [] };
+  if (!votes || votes.length === 0) return { punished: [], skipped: false };
 
   const voteCounts: Record<string, number> = {};
   for (const v of votes) {
@@ -263,26 +265,26 @@ async function applyZikaPunishments(
 
   const { error: clearError } = await (adminClient as any)
     .from("profiles")
-    .update({ zika_punished: false })
+    .update({ zika_punished: false, zika_punished_date: null })
     .not("id", "is", null);
 
   if (clearError) {
     console.error("[Zika] Erro ao zerar punições:", clearError.message);
-    return { punished: [] };
+    return { punished: [], skipped: false };
   }
 
   const { error: punishError } = await (adminClient as any)
     .from("profiles")
-    .update({ zika_punished: true })
+    .update({ zika_punished: true, zika_punished_date: todayStr })
     .in("id", mostZikados);
 
   if (punishError) {
     console.error("[Zika] Erro ao marcar punidos:", punishError.message);
-    return { punished: [] };
+    return { punished: [], skipped: false };
   }
 
   console.log("[Zika] Punidos:", mostZikados);
-  return { punished: mostZikados };
+  return { punished: mostZikados, skipped: false };
 }
 
 // ================================================================
@@ -297,7 +299,6 @@ async function syncMuralSocial(
   console.log(`[Mural Social] Processando match_id: ${matchId} | regerando: ${isLatest}`);
 
   if (isLatest) {
-    console.log(`[Mural Social] Regerando snapshot para match_id: ${matchId}...`);
     const { error: snapshotError } = await adminClient.rpc("gerar_snapshot", {
       p_match_id: matchId,
     });
@@ -306,7 +307,7 @@ async function syncMuralSocial(
       return;
     }
   } else {
-    const { data: existing } = await adminClient
+    const { data: existing } = await (adminClient as any)
       .from("ranking_snapshot")
       .select("id")
       .eq("match_id", matchId)
@@ -314,7 +315,6 @@ async function syncMuralSocial(
       .maybeSingle();
 
     if (!existing) {
-      console.log(`[Mural Social] Gerando snapshot para match_id: ${matchId}...`);
       const { error: snapshotError } = await adminClient.rpc("gerar_snapshot", {
         p_match_id: matchId,
       });
@@ -341,7 +341,7 @@ async function syncMuralSocial(
 }
 
 // ================================================================
-// PONTUAÇÃO DE PARTIDAS
+// PONTUAÇÃO
 // ================================================================
 
 async function calculatePoints(
@@ -417,23 +417,10 @@ async function scoreMatches(
 
     if (userBets) {
       type UserBetPartial = { pontos: number | null };
-
-      // Soma pontos de partidas + pontos especiais já computados
-      const pontosPartidas = (userBets as UserBetPartial[]).reduce(
+      const totalPoints = (userBets as UserBetPartial[]).reduce(
         (acc, curr) => acc + (curr.pontos || 0), 0
       );
-
-      // Busca pontos_especiais do profile para não perder na recalculação
-      const { data: profileData } = await (adminClient as any)
-        .from("profiles")
-        .select("pontos_especiais")
-        .eq("id", userId)
-        .single();
-
-      const pontosEspeciais = profileData?.pontos_especiais ?? 0;
-      const totalPoints = pontosPartidas + pontosEspeciais;
-
-      console.log(`[Admin Sync] Atualizando profile do usuário ${userId} — partidas: ${pontosPartidas} + especiais: ${pontosEspeciais} = ${totalPoints}`);
+      console.log(`[Admin Sync] Atualizando profile do usuário ${userId} para totalPoints: ${totalPoints}`);
 
       const { error: profileUpdateError } = await adminClient
         .from("profiles")

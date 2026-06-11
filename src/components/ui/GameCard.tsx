@@ -9,12 +9,19 @@ interface GameCardProps {
   onBet?: (matchId: string, home: number, away: number) => void;
 }
 
-const STATUS_CONFIG = {
-  scheduled: { label: "Em Breve",   badge: "bg-dark-elevated text-text-muted border-dark-border" },
-  live:      { label: "AO VIVO",    badge: "bg-neon-500 text-pitch-black font-bold animate-pulse shadow-neon-glow" },
-  finished:  { label: "Encerrado",  badge: "bg-dark-elevated text-text-secondary border-dark-border" },
-  postponed: { label: "Adiado",     badge: "bg-dark-elevated text-neon-500 border-neon-900/50" },
+const DEADLINE_MINUTES = 5; // deve ser igual ao valor em bet.ts
+
+const STATUS_CONFIG: Record<string, { label: string; badge: string }> = {
+  SCHEDULED: { label: "Em Breve", badge: "bg-dark-elevated text-text-muted border-dark-border" },
+  LIVE: { label: "AO VIVO", badge: "bg-neon-500 text-pitch-black font-bold animate-pulse shadow-neon-glow" },
+  FINISHED: { label: "Encerrado", badge: "bg-dark-elevated text-text-secondary border-dark-border" },
+  POSTPONED: { label: "Adiado", badge: "bg-dark-elevated text-neon-500 border-neon-900/50" },
 };
+
+// Fallback para caso o status venha em lowercase (retrocompatibilidade)
+function getStatusConfig(status: string) {
+  return STATUS_CONFIG[status.toUpperCase()] ?? STATUS_CONFIG["SCHEDULED"];
+}
 
 function formatMatchTime(isoString: string): string {
   const date = new Date(isoString);
@@ -48,11 +55,18 @@ function FlagOrInitial({ flag, team }: { flag?: string | null; team: string }) {
 }
 
 export function GameCard({ match, userBet }: GameCardProps) {
-  const status = STATUS_CONFIG[match.status];
-  const isFinished = match.status === "finished";
-  const isLive = match.status === "live";
+  const status = getStatusConfig(match.status);
+  const isFinished = match.status?.toUpperCase() === "FINISHED";
+  const isLive = match.status?.toUpperCase() === "LIVE";
   const hasScore = match.home_score !== null && match.away_score !== null;
-  const isDeadlinePassed = new Date() >= new Date(match.match_start_time);
+
+  // Prazo = horário do jogo MENOS 5 minutos
+  // Antes: new Date() >= new Date(match.match_start_time)  ← fechava só no início
+  // Agora: new Date() >= deadline                          ← fecha 5 min antes
+  const deadline = new Date(
+    new Date(match.match_start_time).getTime() - DEADLINE_MINUTES * 60 * 1000
+  );
+  const isDeadlinePassed = new Date() >= deadline;
 
   return (
     <article
@@ -62,7 +76,6 @@ export function GameCard({ match, userBet }: GameCardProps) {
       )}
       aria-label={`${match.home_team} vs ${match.away_team}`}
     >
-      {/* Conteúdo */}
       <div className="px-5 py-4">
         {/* Header: rodada + status + horário */}
         <div className="flex items-center justify-between mb-5">
@@ -122,38 +135,40 @@ export function GameCard({ match, userBet }: GameCardProps) {
 
         {/* Palpite do usuário */}
         {userBet !== undefined && (
-          <>
-            <div className="mt-5 pt-3 border-t border-dark-border border-dashed flex items-center justify-between">
-              <span className="text-[11px] uppercase tracking-widest text-text-muted font-medium">
-                Seu Palpite
+          <div className="mt-5 pt-3 border-t border-dark-border border-dashed flex items-center justify-between">
+            <span className="text-[11px] uppercase tracking-widest text-text-muted font-medium">
+              Seu Palpite
+            </span>
+            {userBet ? (
+              <div className="flex items-center gap-2.5 bg-pitch-black px-3 py-1 rounded-md border border-dark-elevated">
+                <span className="text-base font-bold text-neon-400">
+                  {userBet.home_score_bet}
+                </span>
+                <span className="text-xs text-text-muted">–</span>
+                <span className="text-base font-bold text-neon-400">
+                  {userBet.away_score_bet}
+                </span>
+                {!isDeadlinePassed && (
+                  <span className="text-[10px] text-text-muted ml-1">(editável)</span>
+                )}
+              </div>
+            ) : isDeadlinePassed ? (
+              <span className="text-[11px] font-medium text-text-muted bg-dark-elevated px-2 py-0.5 rounded">
+                Prazo encerrado
               </span>
-              {userBet ? (
-                <div className="flex items-center gap-2.5 bg-pitch-black px-3 py-1 rounded-md border border-dark-elevated">
-                  <span className="text-base font-bold text-neon-400">
-                    {userBet.home_score_bet}
-                  </span>
-                  <span className="text-xs text-text-muted">–</span>
-                  <span className="text-base font-bold text-neon-400">
-                    {userBet.away_score_bet}
-                  </span>
-                  {!isDeadlinePassed && (
-                    <span className="text-[10px] text-text-muted ml-1">(editável)</span>
-                  )}
-                </div>
-              ) : isDeadlinePassed ? (
-                <span className="text-[11px] font-medium text-text-muted bg-dark-elevated px-2 py-0.5 rounded">Prazo encerrado</span>
-              ) : (
-                <span className="text-[11px] font-bold text-neon-400 bg-neon-900/20 px-3 py-1 rounded-full border border-neon-500/30 hover:bg-neon-900/40 transition-colors cursor-pointer">Palpite pendente →</span>
-              )}
-            </div>
-          </>
+            ) : (
+              <span className="text-[11px] font-bold text-neon-400 bg-neon-900/20 px-3 py-1 rounded-full border border-neon-500/30 hover:bg-neon-900/40 transition-colors cursor-pointer">
+                Palpite pendente →
+              </span>
+            )}
+          </div>
         )}
       </div>
     </article>
   );
 }
 
-// Skeleton loader para o GameCard
+// Skeleton loader
 export function GameCardSkeleton() {
   return (
     <div className="rounded-xl bg-dark-card border border-dark-border overflow-hidden p-5">

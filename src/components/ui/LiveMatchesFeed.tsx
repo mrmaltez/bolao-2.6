@@ -55,7 +55,6 @@ function formatDayHeader(dateString: string): string {
   });
 
   const formatted = formatter.format(date);
-  // Capitaliza a primeira letra: "quinta-feira, 20 de junho" -> "Quinta-feira, 20 de junho"
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
@@ -84,17 +83,25 @@ function MatchCard({
   const isFinished = match.status === "FINISHED";
   const hasRealScore = match.score?.fullTime?.home !== null && match.score?.fullTime?.home !== undefined;
 
-  // Lógica de bloqueio: 5 minutos antes do jogo
-  const matchTime = new Date(match.utcDate).getTime();
-  // TODO: REMOVER MODO DE TESTE
-  // const isLocked = Date.now() > matchTime - 5 * 60 * 1000 || !["SCHEDULED", "TIMED"].includes(match.status);
-  const isLocked = false;
+  // Bloqueio 5 minutos antes do início — reavaliado a cada segundo
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
 
-  // Estados locais para os inputs de palpite, inicializados com o palpite existente se houver
+  const matchTime = new Date(match.utcDate).getTime();
+  const isLocked =
+    now > matchTime - 5 * 60 * 1000 ||
+    !["SCHEDULED", "TIMED"].includes(match.status);
+
+  // Minutos restantes até o bloqueio (só exibe se faltar menos de 30 min)
+  const minutesUntilLock = Math.ceil((matchTime - 5 * 60 * 1000 - now) / 60000);
+  const showWarning = !isLocked && minutesUntilLock <= 30 && minutesUntilLock > 0;
+
   const [betHome, setBetHome] = useState<string>(userBet ? userBet.home.toString() : "");
   const [betAway, setBetAway] = useState<string>(userBet ? userBet.away.toString() : "");
 
-  // Se o palpite mudar no contexto (ex: via sync de outra aba/componente), atualiza aqui
   useEffect(() => {
     if (userBet) {
       setBetHome(userBet.home.toString());
@@ -102,7 +109,6 @@ function MatchCard({
     }
   }, [userBet]);
 
-  // Estados de salvamento
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -140,7 +146,6 @@ function MatchCard({
         setSaveStatus("error");
       } else {
         setSaveStatus("success");
-        // Atualiza o contexto global!
         onSaveSuccess(homeVal, awayVal);
       }
     } catch (err) {
@@ -174,6 +179,16 @@ function MatchCard({
           </div>
         </div>
 
+        {/* Aviso de fechamento iminente */}
+        {showWarning && (
+          <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
+            <span className="text-yellow-400 text-xs">⏱</span>
+            <span className="text-yellow-400 text-xs font-bold">
+              Palpites fecham em {minutesUntilLock} min
+            </span>
+          </div>
+        )}
+
         {/* Placar / Palpite */}
         <div className="flex items-center justify-between gap-2">
           {/* Time Casa */}
@@ -198,10 +213,9 @@ function MatchCard({
             </span>
           </div>
 
-          {/* Área Central: Inputs de Palpite e Placar Real */}
+          {/* Área Central */}
           <div className="flex flex-col items-center justify-center min-w-[120px] gap-2">
-
-            {/* Placar Real (Se o jogo começou/terminou) */}
+            {/* Placar Real */}
             {(isLive || isFinished) && hasRealScore && (
               <div className="flex items-center gap-2">
                 <span className={`text-2xl font-black ${isLive ? "text-neon-400" : "text-text-primary"}`}>
@@ -225,8 +239,8 @@ function MatchCard({
                 disabled={isLocked || isSaving}
                 placeholder="-"
                 className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-all duration-200 ${isLocked
-                  ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
-                  : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
+                    ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
+                    : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
                   }`}
                 aria-label={`Palpite gols ${match.homeTeam.shortName}`}
               />
@@ -248,8 +262,8 @@ function MatchCard({
                 disabled={isLocked || isSaving}
                 placeholder="-"
                 className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-all duration-200 ${isLocked
-                  ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
-                  : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
+                    ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
+                    : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
                   }`}
                 aria-label={`Palpite gols ${match.awayTeam.shortName}`}
               />
@@ -279,19 +293,18 @@ function MatchCard({
           </div>
         </div>
 
-        {/* Action Button & Feedback (Só mostra se não estiver bloqueado) */}
+        {/* Botão de salvar — só se não bloqueado */}
         {!isLocked && (
           <div className="pt-4 border-t border-dark-border flex flex-col items-center gap-2">
             {saveStatus === "error" && (
               <p className="text-xs text-red-400 font-medium text-center">{errorMessage}</p>
             )}
-
             <button
               onClick={handleSave}
               disabled={isSaving || isLocked || betHome === "" || betAway === ""}
               className={`w-full max-w-[200px] py-2 px-4 rounded-lg text-xs font-bold tracking-widest uppercase transition-all duration-300 border ${saveStatus === "success"
-                ? "bg-green-500/10 text-green-400 border-green-500/50"
-                : "bg-transparent text-neon-400 border-neon-500/50 hover:bg-neon-500/10 hover:border-neon-500 hover:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-neon-500/50 disabled:hover:drop-shadow-none"
+                  ? "bg-green-500/10 text-green-400 border-green-500/50"
+                  : "bg-transparent text-neon-400 border-neon-500/50 hover:bg-neon-500/10 hover:border-neon-500 hover:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-neon-500/50 disabled:hover:drop-shadow-none"
                 }`}
             >
               {isSaving ? "Salvando..." : saveStatus === "success" ? "✔ Salvo" : "Salvar Palpite"}
@@ -337,27 +350,20 @@ export function LiveMatchesFeed() {
   const [slideDirection, setSlideDirection] = useState<"left" | "right">("right");
   const touchStartX = useRef<number | null>(null);
 
-  // Agrupar matches por dia (YYYY-MM-DD no fuso local)
   const groupedMatches = useMemo(() => {
     const groups: Record<string, FDMatch[]> = {};
-
     matches.forEach((match) => {
       const date = new Date(match.utcDate);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
       const localDateStr = `${year}-${month}-${day}`;
-
-      if (!groups[localDateStr]) {
-        groups[localDateStr] = [];
-      }
+      if (!groups[localDateStr]) groups[localDateStr] = [];
       groups[localDateStr].push(match);
     });
-
     return groups;
   }, [matches]);
 
-  // Array ordenado de chaves de data
   const dayKeys = useMemo(() => Object.keys(groupedMatches).sort(), [groupedMatches]);
 
   useEffect(() => {
@@ -366,21 +372,13 @@ export function LiveMatchesFeed() {
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
       let index = dayKeys.indexOf(todayStr);
-      if (index === -1) {
-        index = dayKeys.findIndex(date => date > todayStr);
-      }
+      if (index === -1) index = dayKeys.findIndex(date => date > todayStr);
 
       const initialIndex = index !== -1 ? index : dayKeys.length - 1;
       setCurrentDayIndex(initialIndex);
       setHasInitializedDay(true);
-
     }
   }, [dayKeys, hasInitializedDay]);
-
-  // Sincronizar Swipe com o Estado
-  // (Removido para usar renderização condicional)
-
-  // Navegação pelas Setas
 
   const navigateDay = (direction: 1 | -1) => {
     const newIndex = currentDayIndex + direction;
@@ -390,8 +388,6 @@ export function LiveMatchesFeed() {
     }
   };
 
-  // Navegação por Swipe (Touch)
-
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
@@ -400,13 +396,8 @@ export function LiveMatchesFeed() {
     if (touchStartX.current === null) return;
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartX.current - touchEndX;
-
     if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        navigateDay(1); // Swipe esquerda -> próximo dia
-      } else {
-        navigateDay(-1); // Swipe direita -> dia anterior
-      }
+      navigateDay(diff > 0 ? 1 : -1);
     }
     touchStartX.current = null;
   };
@@ -418,9 +409,7 @@ export function LiveMatchesFeed() {
           Jogos da Copa 2026
         </h2>
         <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <MatchCardSkeleton key={i} />
-          ))}
+          {Array.from({ length: 3 }).map((_, i) => <MatchCardSkeleton key={i} />)}
         </div>
       </section>
     );
@@ -458,8 +447,8 @@ export function LiveMatchesFeed() {
   const currentKey = dayKeys[currentDayIndex];
 
   return (
-    <section 
-      aria-labelledby="rodada-heading" 
+    <section
+      aria-labelledby="rodada-heading"
       className="flex flex-col gap-4 w-full max-w-full overflow-hidden box-border px-4 pb-6"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -495,33 +484,31 @@ export function LiveMatchesFeed() {
         </button>
       </div>
 
-      {/* Lista de Partidas do Dia (Apenas o ativo) */}
+      {/* Lista de Partidas do Dia */}
       <AnimatePresence mode="wait">
-        <motion.div 
+        <motion.div
           key={currentKey}
           initial={{ x: 20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: -20, opacity: 0 }}
-          transition={{ duration: 0.25, ease: 'easeInOut' }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
           className="rounded-2xl bg-dark-card border border-dark-border shadow-md p-4 w-full"
         >
-        <div className="flex flex-col gap-5">
-          {groupedMatches[currentKey]?.map((match) => (
-            <MatchCard
-              key={match.id}
-              match={match}
-              userBet={userBets[match.id]}
-              onSaveSuccess={(home, away) => updateLocalBet(match.id, home, away)}
-            />
-          ))}
-
-          {(!groupedMatches[currentKey] || groupedMatches[currentKey].length === 0) && (
-            <p className="text-center text-text-muted text-sm py-4">Nenhum jogo para este dia.</p>
-          )}
-        </div>
+          <div className="flex flex-col gap-5">
+            {groupedMatches[currentKey]?.map((match) => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                userBet={userBets[match.id]}
+                onSaveSuccess={(home, away) => updateLocalBet(match.id, home, away)}
+              />
+            ))}
+            {(!groupedMatches[currentKey] || groupedMatches[currentKey].length === 0) && (
+              <p className="text-center text-text-muted text-sm py-4">Nenhum jogo para este dia.</p>
+            )}
+          </div>
         </motion.div>
       </AnimatePresence>
-
     </section>
   );
 }

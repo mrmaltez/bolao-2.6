@@ -63,7 +63,6 @@ export function ZikaBlocker({ isPunished, userId }: ZikaBlockerProps) {
   const [imgIndex, setImgIndex] = useState(0);
   const [msgIndex, setMsgIndex] = useState(0);
   const [fadeIn, setFadeIn] = useState(true);
-  // Começa null — só populado no cliente, nunca no SSR
   const [sessionImages, setSessionImages] = useState<string[] | null>(null);
   const clearedRef = useRef(false);
 
@@ -103,7 +102,6 @@ export function ZikaBlocker({ isPunished, userId }: ZikaBlockerProps) {
     clearZikaPenalty(userId).finally(() => setIsBlocked(false));
   }, [countdown, isBlocked, userId]);
 
-  // Não renderiza nada até o sorteio estar pronto no cliente
   if (!isBlocked || !sessionImages) return null;
 
   const progress = ((TOTAL_SECONDS - countdown) / TOTAL_SECONDS) * 100;

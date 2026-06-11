@@ -12,7 +12,7 @@ export async function GET() {
   }
 
   try {
-    const url = "https://api.football-data.org/v4/competitions/BSA/matches";
+    const url = "https://api.football-data.org/v4/competitions/WC/matches";
 
     console.log("[API /matches] 🔍 URL da requisição:", url);
 

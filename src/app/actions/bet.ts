@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database.types";
 
+const DEADLINE_MINUTES = 5; // minutos antes do jogo que o palpite fecha
+
 interface SaveBetParams {
   id: number;
   home_team: string;
@@ -27,7 +29,18 @@ export async function saveBet(params: SaveBetParams) {
     return { error: "Você precisa estar logado para palpitar." };
   }
 
-  // Usar Service Role Key para contornar RLS na tabela matches, se existir.
+  // 2. Validar prazo — bloqueia se faltarem menos de 5 min ou jogo já começou
+  const matchStart = new Date(params.match_start_time);
+  const deadline = new Date(matchStart.getTime() - DEADLINE_MINUTES * 60 * 1000);
+  const now = new Date();
+
+  if (now >= deadline) {
+    return {
+      error: `Prazo encerrado! Os palpites fecham ${DEADLINE_MINUTES} minutos antes do jogo.`,
+    };
+  }
+
+  // 3. Usar Service Role Key para contornar RLS na tabela matches
   let adminClient = supabase;
   if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
     adminClient = createSupabaseClient<Database>(
@@ -37,7 +50,7 @@ export async function saveBet(params: SaveBetParams) {
   }
 
   try {
-    // 2. Passo A: Upsert na tabela 'matches' (usando a chave primaria 'id' como o ID da API)
+    // 4. Upsert na tabela 'matches'
     const { data: matchData, error: matchError } = await adminClient
       .from("matches")
       .upsert(
@@ -54,20 +67,19 @@ export async function saveBet(params: SaveBetParams) {
       .single();
 
     if (matchError || !matchData) {
-      console.error("[saveBet] Supabase Match Error Detalhado:", matchError);
-      
+      console.error("[saveBet] Supabase Match Error:", matchError);
       if (matchError?.code === "42501") {
-        return { error: "Sem permissão para criar partidas (Falta Service Role Key no servidor)." };
+        return { error: "Sem permissão para criar partidas (falta Service Role Key no servidor)." };
       }
       return { error: "Erro ao registrar a partida no banco." };
     }
 
-    // 3. Passo B: Upsert na tabela 'bets' com o ID da partida
+    // 5. Upsert na tabela 'bets'
     const { error: betError } = await supabase
       .from("bets")
       .upsert(
         {
-          match_id: matchData.id as any, // matchData.id é numérico conforme schema atual do usuário
+          match_id: matchData.id as any,
           user_id: user.id,
           home_score_bet: params.home_score_bet,
           away_score_bet: params.away_score_bet,
@@ -76,21 +88,14 @@ export async function saveBet(params: SaveBetParams) {
       );
 
     if (betError) {
-      console.error("[saveBet] Supabase Bet Error Detalhado:", betError);
-      
-      // Identificar erro de Trigger (Horário do Jogo)
-      // TODO: REMOVER MODO DE TESTE
-      // if (betError.message.includes("Prazo de palpite encerrado")) {
-      //   return { error: "Prazo encerrado! O jogo já começou ou faltam menos de 5 minutos." };
-      // }
-      
+      console.error("[saveBet] Supabase Bet Error:", betError);
       return { error: "Não foi possível salvar seu palpite." };
     }
 
     return { success: true };
-    
+
   } catch (err) {
-    console.error("[saveBet] Exceção Capturada:", err);
+    console.error("[saveBet] Exceção:", err);
     return { error: "Ocorreu um erro interno ao processar o palpite." };
   }
 }
@@ -102,18 +107,15 @@ export async function getUserBets() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return { bets: [] };
-  }
+  if (!user) return { bets: [] };
 
-  // Busca os palpites do usuário logado, trazendo o ID da API associado à partida
   const { data, error } = await supabase
     .from("bets")
     .select("match_id, home_score_bet, away_score_bet")
     .eq("user_id", user.id);
 
   if (error || !data) {
-    console.error("[getUserBets] Erro ao buscar palpites:", error);
+    console.error("[getUserBets] Erro:", error);
     return { bets: [] };
   }
 
