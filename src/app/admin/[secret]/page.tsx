@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { AdminPanel } from "@/components/dashboard/AdminPanel";
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
     params: Promise<{ secret: string }>;
 }

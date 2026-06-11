@@ -5,7 +5,6 @@ import { LiveMatchesFeed } from "@/components/ui/LiveMatchesFeed";
 import type { Profile } from "@/types/database.types";
 import { BetsProvider } from "@/components/dashboard/BetsContext";
 import { UserBetsSidebar } from "@/components/dashboard/UserBetsSidebar";
-import { AdminSyncButton } from "@/components/dashboard/AdminSyncButton";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 import { AnimatedCards, ParallaxBanner } from "@/components/dashboard/DashboardAnimations";
 import { ZikaButton } from "@/components/dashboard/ZikaButton";
@@ -78,10 +77,6 @@ function DestaqueCard({
   );
 }
 
-// ─── Componente de card de videntes com dropdown (Client Component) ───────────
-// Precisa ser "use client" para ter interatividade, por isso fica num arquivo separado.
-// Como page.tsx é Server Component, vamos usar um details/summary nativo do HTML
-// que funciona sem JavaScript — semântico, acessível e sem bundle extra.
 function VidenteCard({
   label,
   videntes,
@@ -106,7 +101,6 @@ function VidenteCard({
         </div>
       </summary>
 
-      {/* Dropdown expandido */}
       <div className="border-t border-dark-border px-4 pb-3 pt-2 flex flex-col gap-2">
         {videntes.map((v, i) => (
           <div key={i}>
@@ -139,14 +133,12 @@ async function MuralSocial() {
     data: { user: currentUser },
   } = await supabase.auth.getUser();
 
-  // ── Perfis ordenados por pontuação total ─────────────────────────────────
   const { data: profilesRaw } = await supabase
     .from("profiles")
     .select("id, username, avatar_url, pontos_total")
     .order("pontos_total", { ascending: false });
   const profiles = (profilesRaw || []) as any[];
 
-  // ── Último dia que teve partidas FINISHED ────────────────────────────────
   const { data: lastFinishedMatch } = await supabase
     .from("matches")
     .select("match_start_time")
@@ -159,7 +151,6 @@ async function MuralSocial() {
     ? toBrasiliaDateStr(new Date(lastFinishedMatch.match_start_time))
     : null;
 
-  // ── Todas as partidas desse dia ──────────────────────────────────────────
   let matchesOfDay: any[] = [];
   let isRoundOngoing = false;
   let dataAtualizacao = "Recentemente";
@@ -191,7 +182,6 @@ async function MuralSocial() {
   const finishedMatches = matchesOfDay.filter((m: any) => m.status === "FINISHED");
   const finishedMatchIds = finishedMatches.map((m: any) => m.id);
 
-  // ── Dados calculados para os destaques ───────────────────────────────────
   let craques: { username: string; total: number }[] = [];
   let micos: { username: string; total: number }[] = [];
   let videntes: { username: string; jogos: string[] }[] = [];
@@ -216,7 +206,6 @@ async function MuralSocial() {
           profiles.find((p: any) => p.id === b.user_id)?.username ?? "Jogador",
       }));
 
-      // Soma de pontos por usuário no dia
       const pontosPorUsuario = new Map<string, { username: string; total: number }>();
       for (const b of enriched) {
         const atual = pontosPorUsuario.get(b.user_id);
@@ -239,7 +228,6 @@ async function MuralSocial() {
         micos = rankingDia.filter((u) => u.total === minPtsDia);
       }
 
-      // Videntes — agrupa acertos por usuário
       const acertosPorUsuario = new Map<string, { username: string; jogos: string[] }>();
       for (const b of enriched) {
         const partida = finishedMatches.find((m: any) => m.id === b.match_id);
@@ -260,7 +248,6 @@ async function MuralSocial() {
     }
   }
 
-  // ── Líder(es) e Lanterna(s) ──────────────────────────────────────────────
   const maxTotal = profiles[0]?.pontos_total ?? 0;
   const minTotal = profiles[profiles.length - 1]?.pontos_total ?? 0;
   const lideres = profiles.filter((p: any) => p.pontos_total === maxTotal);
@@ -269,13 +256,11 @@ async function MuralSocial() {
       ? profiles.filter((p: any) => p.pontos_total === minTotal)
       : [];
 
-  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <section
       aria-labelledby="mural-heading"
       className="rounded-2xl bg-dark-card border border-dark-border shadow-md p-6 h-full flex flex-col gap-5 w-full"
     >
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h2
           id="mural-heading"
@@ -300,10 +285,7 @@ async function MuralSocial() {
         <strong className="text-text-secondary">{dataAtualizacao}</strong>
       </p>
 
-      {/* Cards */}
       <div className="flex-1 flex flex-col gap-3">
-
-        {/* 👑 Líder(es) Geral */}
         {lideres.length > 0 && (
           <DestaqueCard
             emoji="👑"
@@ -314,7 +296,6 @@ async function MuralSocial() {
           />
         )}
 
-        {/* 🎯 Craque(s) da Rodada */}
         {craques.length > 0 && (
           <DestaqueCard
             emoji="🎯"
@@ -325,7 +306,6 @@ async function MuralSocial() {
           />
         )}
 
-        {/* 🔮 Vidente(s) — dropdown */}
         {videntes.length > 0 && (
           <VidenteCard
             label={videntes.length > 1 ? "Videntes!" : "Vidente!"}
@@ -333,7 +313,6 @@ async function MuralSocial() {
           />
         )}
 
-        {/* 💀 Mico(s) da Rodada */}
         {micos.length > 0 && (
           <DestaqueCard
             emoji="💀"
@@ -344,7 +323,6 @@ async function MuralSocial() {
           />
         )}
 
-        {/* 🐢 Lanterna(s) */}
         {lanternas.length > 0 && (
           <DestaqueCard
             emoji="🐢"
@@ -355,7 +333,6 @@ async function MuralSocial() {
           />
         )}
 
-        {/* Estado vazio */}
         {lideres.length === 0 && (
           <div className="flex-1 rounded-xl border border-dark-border border-dashed bg-pitch-black/40 p-8 flex flex-col items-center justify-center text-center">
             <p className="text-text-secondary text-sm font-semibold">
@@ -364,7 +341,6 @@ async function MuralSocial() {
           </div>
         )}
 
-        {/* 🧿 Zikado da Rodada */}
         {zikadoNome && (
           <div className="bg-purple-900/20 py-3.5 px-4 rounded-xl border border-purple-500/30 flex items-center gap-3">
             <div className="text-2xl drop-shadow-md shrink-0">🧿</div>
@@ -461,7 +437,7 @@ export default async function HomePage() {
           <AnimatedCards className="w-full">
             <div className="w-full flex flex-col lg:flex-row gap-6 lg:gap-4 items-start w-full">
 
-              {/* Coluna Esquerda (Mural) - Último no mobile */}
+              {/* Coluna Esquerda (Mural) */}
               <div
                 data-animate-card
                 className="flex-1 w-full order-3 lg:order-1 flex flex-col h-fit"
@@ -469,7 +445,7 @@ export default async function HomePage() {
                 <MuralSocial />
               </div>
 
-              {/* Coluna Central (Jogos) - Primeiro no mobile */}
+              {/* Coluna Central (Jogos) */}
               <div
                 data-animate-card
                 className="flex-1 w-full order-1 lg:order-2 flex flex-col h-fit"
@@ -477,7 +453,7 @@ export default async function HomePage() {
                 <LiveMatchesFeed />
               </div>
 
-              {/* Coluna Direita (Meus Palpites) - Segundo no mobile */}
+              {/* Coluna Direita (Meus Palpites) */}
               <div
                 data-animate-card
                 className="flex-1 w-full order-2 lg:order-3 flex flex-col h-fit"
@@ -488,11 +464,6 @@ export default async function HomePage() {
             </div>
           </AnimatedCards>
         </BetsProvider>
-
-        {/* ── Painel Administrativo Oculto ── */}
-        <div className="mt-20 flex justify-center lg:justify-end opacity-20 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
-          <AdminSyncButton />
-        </div>
       </main>
     </div>
   );
