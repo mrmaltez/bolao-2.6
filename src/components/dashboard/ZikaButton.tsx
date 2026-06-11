@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { ZikaModal } from "./ZikaModal";
 
 interface ZikaButtonProps {
@@ -20,13 +21,15 @@ export function ZikaButton({ profiles, currentUserId }: ZikaButtonProps) {
         <span className="text-lg">🧿</span> Zique a Mossada
       </button>
 
-      {isOpen && (
-        <ZikaModal
-          profiles={profiles}
-          currentUserId={currentUserId}
-          onClose={() => setIsOpen(false)}
-        />
-      )}
+      {isOpen &&
+        createPortal(
+          <ZikaModal
+            profiles={profiles}
+            currentUserId={currentUserId}
+            onClose={() => setIsOpen(false)}
+          />,
+          document.body
+        )}
     </>
   );
 }
