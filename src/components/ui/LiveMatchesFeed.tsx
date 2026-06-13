@@ -58,6 +58,24 @@ function formatDayHeader(dateString: string): string {
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
+// ─── Agrupa jogos por "dia lógico" ────────────────────────────────────────────
+// Jogos entre 00:00 e 02:59 (horário de SP) são considerados do dia anterior,
+// pois pertencem à mesma rodada. O offset de 3h resolve isso.
+function getLogicalDateKey(utcDate: string): string {
+  const date = new Date(utcDate);
+
+  // Converte para horário de São Paulo
+  const spDate = new Date(date.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+
+  // Subtrai 3h: jogos até 02:59 ficam agrupados no dia anterior
+  spDate.setHours(spDate.getHours() - 3);
+
+  const year = spDate.getFullYear();
+  const month = String(spDate.getMonth() + 1).padStart(2, "0");
+  const day = String(spDate.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   SCHEDULED: { label: "Agendado", className: "bg-dark-elevated text-text-muted border border-dark-border" },
   TIMED: { label: "Agendado", className: "bg-dark-elevated text-text-muted border border-dark-border" },
@@ -239,8 +257,8 @@ function MatchCard({
                 disabled={isLocked || isSaving}
                 placeholder="-"
                 className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-all duration-200 ${isLocked
-                    ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
-                    : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
+                  ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
+                  : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
                   }`}
                 aria-label={`Palpite gols ${match.homeTeam.shortName}`}
               />
@@ -262,8 +280,8 @@ function MatchCard({
                 disabled={isLocked || isSaving}
                 placeholder="-"
                 className={`w-12 h-12 text-center text-xl font-bold rounded-lg border focus:outline-none transition-all duration-200 ${isLocked
-                    ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
-                    : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
+                  ? "bg-dark-elevated/50 border-dark-border text-text-muted opacity-60 cursor-not-allowed"
+                  : "bg-pitch-black border-transparent text-neon-400 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 focus:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] shadow-inner hover:border-dark-border"
                   }`}
                 aria-label={`Palpite gols ${match.awayTeam.shortName}`}
               />
@@ -303,8 +321,8 @@ function MatchCard({
               onClick={handleSave}
               disabled={isSaving || isLocked || betHome === "" || betAway === ""}
               className={`w-full max-w-[200px] py-2 px-4 rounded-lg text-xs font-bold tracking-widest uppercase transition-all duration-300 border ${saveStatus === "success"
-                  ? "bg-green-500/10 text-green-400 border-green-500/50"
-                  : "bg-transparent text-neon-400 border-neon-500/50 hover:bg-neon-500/10 hover:border-neon-500 hover:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-neon-500/50 disabled:hover:drop-shadow-none"
+                ? "bg-green-500/10 text-green-400 border-green-500/50"
+                : "bg-transparent text-neon-400 border-neon-500/50 hover:bg-neon-500/10 hover:border-neon-500 hover:drop-shadow-[0_0_8px_rgba(255,107,0,0.6)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-neon-500/50 disabled:hover:drop-shadow-none"
                 }`}
             >
               {isSaving ? "Salvando..." : saveStatus === "success" ? "✔ Salvo" : "Salvar Palpite"}
@@ -353,13 +371,11 @@ export function LiveMatchesFeed() {
   const groupedMatches = useMemo(() => {
     const groups: Record<string, FDMatch[]> = {};
     matches.forEach((match) => {
-      const date = new Date(match.utcDate);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const localDateStr = `${year}-${month}-${day}`;
-      if (!groups[localDateStr]) groups[localDateStr] = [];
-      groups[localDateStr].push(match);
+      // Usa a data lógica com offset de 3h para agrupar jogos da madrugada
+      // no mesmo dia da rodada (ex: jogo à 01h fica junto com os do dia anterior)
+      const logicalKey = getLogicalDateKey(match.utcDate);
+      if (!groups[logicalKey]) groups[logicalKey] = [];
+      groups[logicalKey].push(match);
     });
     return groups;
   }, [matches]);
@@ -368,8 +384,11 @@ export function LiveMatchesFeed() {
 
   useEffect(() => {
     if (!hasInitializedDay && dayKeys.length > 0) {
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      // "Hoje lógico" também usa o mesmo offset de 3h
+      const now = new Date();
+      const spNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+      spNow.setHours(spNow.getHours() - 3);
+      const todayStr = `${spNow.getFullYear()}-${String(spNow.getMonth() + 1).padStart(2, "0")}-${String(spNow.getDate()).padStart(2, "0")}`;
 
       let index = dayKeys.indexOf(todayStr);
       if (index === -1) index = dayKeys.findIndex(date => date > todayStr);
