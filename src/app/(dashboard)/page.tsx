@@ -9,13 +9,12 @@ import { LogoutButton } from "@/components/dashboard/LogoutButton";
 import { AnimatedCards, ParallaxBanner } from "@/components/dashboard/DashboardAnimations";
 import { ZikaButton } from "@/components/dashboard/ZikaButton";
 import { getZikadosDoDia } from "@/app/actions/zika";
+import { AllBetsSidebar } from "@/components/dashboard/AllBetsSidebar";
 
 export const metadata: Metadata = {
   title: "Home",
   description: "Acompanhe os jogos da rodada, o mural social e a tabela da Copa.",
 };
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function toSigla(name: string): string {
   if (!name) return "?";
@@ -47,7 +46,6 @@ function toBrasiliaDateStr(date: Date): string {
     .join("-");
 }
 
-// ─── Componente de card padrão ────────────────────────────────────────────────
 function DestaqueCard({
   emoji,
   label,
@@ -100,7 +98,6 @@ function VidenteCard({
           </p>
         </div>
       </summary>
-
       <div className="border-t border-dark-border px-4 pb-3 pt-2 flex flex-col gap-2">
         {videntes.map((v, i) => (
           <div key={i}>
@@ -124,7 +121,6 @@ function VidenteCard({
   );
 }
 
-// ─── Mural Social ─────────────────────────────────────────────────────────────
 async function MuralSocial() {
   const supabase = await createClient();
 
@@ -295,7 +291,6 @@ async function MuralSocial() {
             cor="text-neon-400"
           />
         )}
-
         {craques.length > 0 && (
           <DestaqueCard
             emoji="🎯"
@@ -305,14 +300,12 @@ async function MuralSocial() {
             cor="text-yellow-400"
           />
         )}
-
         {videntes.length > 0 && (
           <VidenteCard
             label={videntes.length > 1 ? "Videntes!" : "Vidente!"}
             videntes={videntes}
           />
         )}
-
         {micos.length > 0 && (
           <DestaqueCard
             emoji="💀"
@@ -322,7 +315,6 @@ async function MuralSocial() {
             cor="text-red-400"
           />
         )}
-
         {lanternas.length > 0 && (
           <DestaqueCard
             emoji="🐢"
@@ -332,7 +324,6 @@ async function MuralSocial() {
             cor="text-text-muted"
           />
         )}
-
         {lideres.length === 0 && (
           <div className="flex-1 rounded-xl border border-dark-border border-dashed bg-pitch-black/40 p-8 flex flex-col items-center justify-center text-center">
             <p className="text-text-secondary text-sm font-semibold">
@@ -340,7 +331,6 @@ async function MuralSocial() {
             </p>
           </div>
         )}
-
         {zikadoNome && (
           <div className="bg-purple-900/20 py-3.5 px-4 rounded-xl border border-purple-500/30 flex items-center gap-3">
             <div className="text-2xl drop-shadow-md shrink-0">🧿</div>
@@ -375,7 +365,6 @@ async function MuralSocial() {
   );
 }
 
-// ─── Página principal (Server Component) ──────────────────────────────────────
 export default async function HomePage() {
   const supabase = await createClient();
 
@@ -411,7 +400,6 @@ export default async function HomePage() {
               </p>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="bg-dark-card border border-dark-border px-5 py-2.5 rounded-xl shadow-sm text-right">
               <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest">
@@ -435,7 +423,7 @@ export default async function HomePage() {
       <main className="w-[calc(100%-2rem)] mx-auto max-w-7xl flex flex-col gap-y-6">
         <BetsProvider>
           <AnimatedCards className="w-full">
-            <div className="w-full flex flex-col lg:flex-row gap-6 lg:gap-4 items-start w-full">
+            <div className="w-full flex flex-col lg:flex-row gap-6 lg:gap-4 items-start">
 
               {/* Coluna Esquerda (Mural) */}
               <div
@@ -461,10 +449,22 @@ export default async function HomePage() {
                 <UserBetsSidebar />
               </div>
 
+              {/* Coluna Extra (Palpites da Galera) */}
+              <div
+                data-animate-card
+                className="flex-1 w-full order-4 lg:order-4 flex flex-col h-fit"
+              >
+                <AllBetsSidebar />
+              </div>
+
             </div>
           </AnimatedCards>
         </BetsProvider>
+
+        {/* Espaçador inferior — replica o gap entre blocos no mobile */}
+        <div className="h-4" />
       </main>
+
     </div>
   );
 }
