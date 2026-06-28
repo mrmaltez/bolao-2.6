@@ -74,7 +74,6 @@ function MatchBetCard({
   const playersWithBet = players.filter((p) => p.bets[match.id] !== undefined);
   const playersWithoutBet = players.filter((p) => p.bets[match.id] === undefined);
 
-  // Rola o card pra vista quando abre o dropdown no mobile
   const handleToggle = () => {
     if (!isStarted) return;
     const opening = !isOpen;
@@ -82,7 +81,7 @@ function MatchBetCard({
     if (opening) {
       setTimeout(() => {
         cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }, 260); // aguarda animação terminar
+      }, 260);
     }
   };
 
@@ -91,7 +90,6 @@ function MatchBetCard({
       ref={cardRef}
       className="rounded-xl bg-dark-elevated/20 border border-dark-border/50 overflow-hidden"
     >
-      {/* Cabeçalho do jogo */}
       <button
         onClick={handleToggle}
         disabled={!isStarted}
@@ -127,7 +125,6 @@ function MatchBetCard({
         </div>
       </button>
 
-      {/* Dropdown com palpites */}
       <AnimatePresence>
         {isOpen && isStarted && (
           <motion.div
@@ -138,7 +135,6 @@ function MatchBetCard({
             className="overflow-hidden"
           >
             <div className="border-t border-dark-border/50 px-4 py-2 flex flex-col">
-
               {playersWithBet.length === 0 ? (
                 <p className="text-xs text-text-muted text-center py-3">
                   Nenhum palpite registrado.
@@ -152,15 +148,12 @@ function MatchBetCard({
                         key={player.id}
                         className="flex items-center justify-between gap-3 py-3"
                       >
-                        {/* Avatar + nome */}
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <PlayerAvatar src={player.avatar_url} name={player.username} />
                           <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide truncate">
                             {player.username}
                           </span>
                         </div>
-
-                        {/* Palpite — área maior, mais fácil de ler */}
                         <div className="flex items-center gap-1.5 flex-shrink-0 bg-pitch-black px-3 py-1.5 rounded-lg border border-dark-elevated shadow-inner min-w-[56px] justify-center">
                           <span className="text-sm font-black text-neon-400 drop-shadow-[0_0_5px_rgba(255,107,0,0.6)] tabular-nums">
                             {bet.home}
@@ -176,7 +169,6 @@ function MatchBetCard({
                 </ul>
               )}
 
-              {/* Quem não apostou */}
               {playersWithoutBet.length > 0 && (
                 <div className="mt-1 pt-3 border-t border-dark-border/30">
                   <p className="text-[9px] uppercase tracking-widest text-text-muted font-semibold mb-2">
@@ -192,7 +184,6 @@ function MatchBetCard({
                   </div>
                 </div>
               )}
-
             </div>
           </motion.div>
         )}
@@ -226,7 +217,10 @@ export function AllBetsSidebar() {
             .from("profiles")
             .select("id, username, avatar_url")
             .order("pontos_total", { ascending: false }),
-          supabase.from("bets").select("user_id, match_id, home_score_bet, away_score_bet"),
+          supabase
+            .from("bets")
+            .select("user_id, match_id, home_score_bet, away_score_bet")
+            .limit(10000),
         ]);
 
         if (!profiles) return;
@@ -236,7 +230,11 @@ export function AllBetsSidebar() {
           (bets || [])
             .filter((b) => b.user_id === profile.id)
             .forEach((b) => {
-              playerBets[b.match_id] = { home: b.home_score_bet, away: b.away_score_bet };
+              // Converte match_id para number para bater com match.id da API
+              playerBets[Number(b.match_id)] = {
+                home: b.home_score_bet,
+                away: b.away_score_bet,
+              };
             });
           return {
             id: profile.id,
@@ -331,7 +329,8 @@ export function AllBetsSidebar() {
 
   return (
     <aside
-      className="flex flex-col gap-4 w-full box-border pb-24" onTouchStart={handleTouchStart}
+      className="flex flex-col gap-4 w-full box-border pb-24"
+      onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Navegação Diária */}
@@ -368,15 +367,13 @@ export function AllBetsSidebar() {
         </button>
       </div>
 
-      {/* Card principal — cresce naturalmente, sem altura fixa */}
+      {/* Card principal */}
       <div className="rounded-xl bg-dark-card border border-dark-border overflow-hidden shadow-lg">
-        {/* Cabeçalho */}
         <div className="px-5 py-4 border-b border-dark-border bg-gradient-to-r from-neon-900/10 to-transparent flex items-center gap-3">
           <span className="text-2xl" aria-hidden="true">👥</span>
           <h2 className="text-sm font-bold text-text-primary tracking-tight">Palpites da Galera</h2>
         </div>
 
-        {/* Lista de jogos */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentKey}

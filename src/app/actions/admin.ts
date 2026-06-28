@@ -19,6 +19,37 @@ function mapStatus(apiStatus: string | undefined): "SCHEDULED" | "LIVE" | "FINIS
   }
 }
 
+/**
+ * Extrai o placar do TEMPO REGULAMENTAR (90 min) de um jogo da API football-data.org v4.
+ *
+ * Desde a v4, score.regularTime existe SOMENTE quando o jogo foi decidido em
+ * prorrogação ou pênaltis (mata-mata). Em jogos sem prorrogação (fase de grupos,
+ * ou mata-mata decidido nos 90 min), regularTime não vem no payload — nesse caso
+ * fullTime JÁ É o placar regulamentar, e usamos ele como fallback.
+ *
+ * Isso garante que pontuamos sempre pelo tempo normal, nunca pela prorrogação/pênaltis.
+ */
+function extractRegularTimeScore(m: any): { home_score: number | null; away_score: number | null } {
+  const regular = m.score?.regularTime;
+  const full = m.score?.fullTime;
+
+  const home_score = regular?.home ?? full?.home ?? null;
+  const away_score = regular?.away ?? full?.away ?? null;
+
+  // Log de auditoria: avisa sempre que um jogo foi decidido fora do tempo normal,
+  // mostrando os dois placares para conferência manual.
+  const duration = m.score?.duration;
+  if (duration && duration !== "REGULAR") {
+    console.log(
+      `[Admin Sync] ⚠️ Jogo ${m.id} (${m.homeTeam?.shortName ?? m.homeTeam?.name} x ${m.awayTeam?.shortName ?? m.awayTeam?.name}) ` +
+      `decidido em ${duration}. Pontuando com tempo regulamentar: ${home_score}x${away_score} ` +
+      `| Placar final real do confronto: ${full?.home}x${full?.away}`
+    );
+  }
+
+  return { home_score, away_score };
+}
+
 export async function syncMatchResults() {
   console.log("[Admin Sync] Iniciando sincronização de placares...");
 
@@ -57,15 +88,19 @@ export async function syncMatchResults() {
 
     // ── PASSO 1: Upsert de TODOS os jogos (scheduled, live, finished) ──
     // Antes só enviava jogos FINISHED — por isso a grade WC nunca aparecia.
-    const allUpsertData = allMatches.map((m: any) => ({
-      id: m.id,
-      home_team: m.homeTeam?.shortName || m.homeTeam?.name || "TBD",
-      away_team: m.awayTeam?.shortName || m.awayTeam?.name || "TBD",
-      match_start_time: m.utcDate,
-      home_score: m.score?.fullTime?.home ?? null,
-      away_score: m.score?.fullTime?.away ?? null,
-      status: mapStatus(m.status),
-    }));
+    const allUpsertData = allMatches.map((m: any) => {
+      const { home_score, away_score } = extractRegularTimeScore(m);
+
+      return {
+        id: m.id,
+        home_team: m.homeTeam?.shortName || m.homeTeam?.name || "TBD",
+        away_team: m.awayTeam?.shortName || m.awayTeam?.name || "TBD",
+        match_start_time: m.utcDate,
+        home_score,
+        away_score,
+        status: mapStatus(m.status),
+      };
+    });
 
     const { error: upsertError } = await adminClient
       .from("matches")
