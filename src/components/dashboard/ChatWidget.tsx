@@ -142,18 +142,18 @@ export function ChatWidget({ currentUserId }: { currentUserId: string }) {
 
     return (
         <>
-            {/* ── Bolha flutuante ── */}
+            {/* ── Bolha flutuante — fundo transparente para não obstruir o conteúdo atrás */}
             <button
                 onClick={() => setIsOpen((v) => !v)}
                 aria-label={isOpen ? "Fechar chat" : "Abrir chat do bolão"}
-                className="fixed bottom-24 right-4 sm:bottom-8 sm:right-8 z-50 w-14 h-14 rounded-full bg-neon-gradient shadow-lg shadow-black/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+                className="fixed bottom-24 right-4 sm:bottom-8 sm:right-8 z-50 w-14 h-14 rounded-full bg-pitch-black/30 backdrop-blur-md border border-orange-500/40 shadow-lg shadow-black/30 flex items-center justify-center hover:bg-pitch-black/50 hover:border-orange-500/70 active:scale-95 transition-all"
             >
                 {isOpen ? (
-                    <svg className="w-6 h-6 text-pitch-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <svg className="w-6 h-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 ) : (
-                    <svg className="w-6 h-6 text-pitch-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-6 h-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                 )}
