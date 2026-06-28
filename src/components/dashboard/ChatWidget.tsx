@@ -198,7 +198,7 @@ export function ChatWidget({ currentUserId }: { currentUserId: string }) {
               não dependendo só de self-end no item. */}
                     <div
                         ref={scrollRef}
-                        className="flex-1 overflow-y-auto flex flex-col gap-4"
+                        className="flex-1 overflow-y-auto flex flex-col gap-3"
                         style={{ paddingLeft: "1rem", paddingRight: "1rem", paddingTop: "1.25rem", paddingBottom: "1rem" }}
                     >
                         {messages.length === 0 && (
@@ -219,19 +219,19 @@ export function ChatWidget({ currentUserId }: { currentUserId: string }) {
                                 >
                                     {/* Bloco da mensagem — max-w relativo à linha, nunca toca a borda
                       porque a linha já tem o padding do wrapper acima */}
-                                    <div className={`flex flex-col gap-1 max-w-[82%] ${isOwn ? "items-end" : "items-start"}`}>
+                                    <div className={`flex flex-col gap-0.5 max-w-[82%] ${isOwn ? "items-end" : "items-start"}`}>
                                         <span
-                                            className={`text-sm font-bold ${isOwn ? "text-neon-400" : "text-orange-400"
+                                            className={`text-xs font-bold ${isOwn ? "text-neon-400" : "text-orange-400"
                                                 }`}
                                         >
                                             {isOwn ? "Você" : displayName}
                                         </span>
 
-                                        <p className="text-base leading-relaxed text-text-primary break-words whitespace-pre-wrap">
+                                        <p className="text-sm leading-snug text-text-primary break-words whitespace-pre-wrap">
                                             {msg.message}
                                         </p>
 
-                                        <span className="text-[11px] text-text-muted">
+                                        <span className="text-[10px] text-text-muted">
                                             {formatTime(msg.created_at)}
                                         </span>
                                     </div>
@@ -262,7 +262,7 @@ export function ChatWidget({ currentUserId }: { currentUserId: string }) {
                                 placeholder="Digite sua mensagem..."
                                 maxLength={500}
                                 disabled={isPending}
-                                className="flex-1 resize-none rounded-xl bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-[15px] leading-relaxed text-text-primary placeholder:text-text-muted disabled:opacity-50 min-h-[3rem] max-h-[7.5rem]"
+                                className="flex-1 resize-none rounded-xl bg-black/50 border border-gray-800 focus:border-orange-500 outline-none transition text-sm leading-snug text-text-primary placeholder:text-text-muted disabled:opacity-50 min-h-[2.75rem] max-h-[7.5rem]"
                                 style={{ paddingLeft: "1rem", paddingRight: "1rem", paddingTop: "0.75rem", paddingBottom: "0.75rem" }}
                             />
                             <button
