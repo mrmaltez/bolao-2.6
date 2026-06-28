@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/ui/BottomNav";
+import { ChatWidget } from "@/components/dashboard/ChatWidget";
 
 export default async function DashboardLayout({
   children,
@@ -30,6 +31,9 @@ export default async function DashboardLayout({
 
       {/* Bottom Navigation fixo */}
       <BottomNav />
+
+      {/* Chat flutuante — visível em todas as páginas do dashboard */}
+      <ChatWidget currentUserId={user.id} />
     </div>
   );
 }
