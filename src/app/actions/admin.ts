@@ -20,30 +20,61 @@ function mapStatus(apiStatus: string | undefined): "SCHEDULED" | "LIVE" | "FINIS
 }
 
 /**
- * Extrai o placar do TEMPO REGULAMENTAR (90 min) de um jogo da API football-data.org v4.
+ * Extrai o placar do JOGO INTEIRO (90 min + prorrogação, SEM pênaltis)
+ * de um jogo da API football-data.org v4.
  *
- * Desde a v4, score.regularTime existe SOMENTE quando o jogo foi decidido em
- * prorrogação ou pênaltis (mata-mata). Em jogos sem prorrogação (fase de grupos,
- * ou mata-mata decidido nos 90 min), regularTime não vem no payload — nesse caso
- * fullTime JÁ É o placar regulamentar, e usamos ele como fallback.
+ * Regra de negócio: a pontuação considera o tempo normal + prorrogação
+ * (ou seja, o resultado "de campo"), mas NUNCA o resultado da disputa
+ * de pênaltis, que é só um critério de desempate administrativo.
  *
- * Isso garante que pontuamos sempre pelo tempo normal, nunca pela prorrogação/pênaltis.
+ * Como a API estrutura os placares:
+ *   - regularTime: gols ao final dos 90 min (existe apenas quando há prorrogação/pênaltis)
+ *   - extraTime:   gols feitos especificamente NA prorrogação (não é acumulado)
+ *   - fullTime:    placar "oficial" do confronto — quando há pênaltis, ele JÁ
+ *                  inclui o resultado da disputa, por isso não pode ser usado
+ *                  diretamente nesses casos.
+ *
+ * Portanto:
+ *   - Jogo sem prorrogação (fase de grupos ou mata-mata decidido nos 90 min):
+ *     regularTime não existe → fullTime já é o placar correto (tempo normal).
+ *   - Jogo com prorrogação (foi a pênaltis ou não):
+ *     regularTime + extraTime = placar real do jogo (90 min + prorrogação),
+ *     ignorando qualquer gol "de pênalti".
  */
 function extractRegularTimeScore(m: any): { home_score: number | null; away_score: number | null } {
   const regular = m.score?.regularTime;
+  const extra = m.score?.extraTime;
   const full = m.score?.fullTime;
 
-  const home_score = regular?.home ?? full?.home ?? null;
-  const away_score = regular?.away ?? full?.away ?? null;
+  let home_score: number | null;
+  let away_score: number | null;
 
-  // Log de auditoria: avisa sempre que um jogo foi decidido fora do tempo normal,
-  // mostrando os dois placares para conferência manual.
+  if (regular?.home != null && regular?.away != null) {
+    // Houve prorrogação (ou ao menos o campo regularTime existe).
+    // Soma tempo normal + prorrogação; extraTime pode vir null em jogos
+    // que regularTime existe mas não foram à prorrogação de fato — por
+    // segurança, tratamos null/undefined como 0 no extraTime.
+    const extraHome = extra?.home ?? 0;
+    const extraAway = extra?.away ?? 0;
+
+    home_score = regular.home + extraHome;
+    away_score = regular.away + extraAway;
+  } else {
+    // Sem prorrogação: fullTime já é o resultado completo do jogo (tempo normal).
+    home_score = full?.home ?? null;
+    away_score = full?.away ?? null;
+  }
+
+  // Log de auditoria: sempre que o jogo não foi decidido no tempo normal,
+  // mostra os placares de cada etapa para conferência manual.
   const duration = m.score?.duration;
   if (duration && duration !== "REGULAR") {
     console.log(
       `[Admin Sync] ⚠️ Jogo ${m.id} (${m.homeTeam?.shortName ?? m.homeTeam?.name} x ${m.awayTeam?.shortName ?? m.awayTeam?.name}) ` +
-      `decidido em ${duration}. Pontuando com tempo regulamentar: ${home_score}x${away_score} ` +
-      `| Placar final real do confronto: ${full?.home}x${full?.away}`
+      `decidido em ${duration}. ` +
+      `regularTime: ${regular?.home}x${regular?.away} | extraTime: ${extra?.home}x${extra?.away} | ` +
+      `Pontuando com (90min + prorrogação): ${home_score}x${away_score} | ` +
+      `Placar oficial do confronto (com pênaltis, se houver): ${full?.home}x${full?.away}`
     );
   }
 
